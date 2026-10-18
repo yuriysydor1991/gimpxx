@@ -1,180 +1,53 @@
-**Твій охайний шаблон для С++ програми**
+**Спроба перенесення графічного редактора GIMP на мову C++**
 
-# Ціль проекту-шаблону
+Оригінальний репозиторій взято з [https://gitlab.gnome.org/GNOME/gimp](https://gitlab.gnome.org/GNOME/gimp), з його останнього стабільного випуску `GIMP_3_2_6`.
 
-Проект-шаблон призначений для пришвидшення процесу побудови програми на стадії започаткування проекту за допомогою готової початкової структури програми. Отож розробник може одразу перейти до реалізації конкретної програми з мінімальними затратами на базову структуру.
+Деякі частини репозиторію взято з шаблонного C++ проекту за адресою [https://github.com/yuriysydor1991/cpp-app-template.git](https://github.com/yuriysydor1991/cpp-app-template.git) (спеціалізація `appMeson`), так само як їх бере [darknetxx](https://github.com/yuriysydor1991/darknetxx.git).
 
-Полегшує вийти за рамки коду - створюй складні і готові до поставки **програмний продукти** швидко!
+**Робота триває. Поки що лише запуск GIMP написано на C++**
 
-Дозволяє стрімке створення завершеного **програмного продукту** - на противагу звичайного куска коду чи простої програми.
+# Структура репозиторію
 
-**Створи форк і одразу реалізуй свою програму!**
+| Шлях | Вміст |
+|---|---|
+| [`meson.build`](/meson.build), [`meson_options.txt`](/meson_options.txt) | Корінь побудови. Спочатку йдуть опції GIMP (малими літерами), за ними опції шаблону (великими літерами) |
+| [`meson`](/meson) | Модулі Meson шаблону (`gimpxx-*`): захист бінарних файлів, санітайзери, перевірки коду, профілювальники, пакувальники |
+| [`src/main.cpp`](/src/main.cpp), [`src/app`](/src/app), [`src/log`](/src/log) | Прикладний C++ рівень шаблону, який запускає GIMP |
+| [`src/gimp`](/src/gimp) | Оригінальне дерево GIMP разом з підмодулем [`gimp-data`](/src/gimp/gimp-data). Його [`README`](/src/gimp/README) - це README від GIMP |
+| [`doc`](/doc) | Розділи документації, діаграми та конфігурація Doxygen |
+| [`misc`](/misc), [`scripts`](/scripts) | Конфігурації стилю та перевірок коду, шаблони пакунків та допоміжні скрипти |
 
-Шаблонний проект **не являється фреймворком** у традиційних термінах отож інфраструктурні елементи можна змінювати за бажанням або видалити за непотреби.
+Посилання `gimp-data` у корені вказує на `src/gimp/gimp-data`, оскільки файли побудови gimp-data звертаються до своїх зображень відносно кореня проекту верхнього рівня.
 
-Більше за посиланням [kytok.org.ua](http://www.kytok.org.ua/)
+# Запуск GIMP
 
-💵 Підтримай проект за посиланням [http://kytok.org.ua/page/pozertvy](http://kytok.org.ua/page/pozertvy)
+Файл [`src/main.cpp`](/src/main.cpp) викликає `app::ApplicationFactory::execute`. Фабрика виконує кроки запуску колишньої функції `main()` GIMP в їхньому початковому порядку, через C функції з [`src/gimp/app/main.h`](/src/gimp/app/main.h):
 
-# Спеціалізації шаблонного проекту
+1. `gimp_main_init_platform` - оточення Windows та macOS і вікно консолі;
+1. `GimpSignalsHandler` - трасування стеку та обробники сигналів GIMP;
+1. `gimp_main_init_process` - оточення GLib та GIMP, журналювання GIMP, переклади та копія аргументів, якою володіє `ApplicationContext`;
+1. `CommandLineParser` - пошук опцій детального виводу, роботи без інтерфейсу та версії, а потім розбір опцій GIMP;
+1. `ApplicationVersionPrinter` або `Application` - вивід версії, або вже запущений екземпляр GIMP, перевірка бібліотек та запуск GIMP.
 
-Переглянь доступні гілки у репозиторії проекту-шаблону і використай найбільш підходящу спеціалізацію або комбінуй декілька гілок щоб створити необхідну структуру шаблону:
+Опції GIMP, а також код окремих платформ та консольної програми поки що залишаються у [`src/gimp/app/main.c`](/src/gimp/app/main.c). C++ код журналює лише попередження та помилки, у стандартний потік помилок, і не створює файлу журналу. Компонент `SignalsHandler` шаблону присутній, але не встановлюється, оскільки обробники сигналів GIMP поки що зберігають власну поведінку.
 
-## Базова структура програми
+# Побудова
 
-- гілка `main` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template)] один файл з функцією `main` і з усіма можливими інтеграціями для генерації одного бінарного виконуваного файлу.
+Клонуйте репозиторій разом з підмодулем `gimp-data`:
 
-- гілка `app` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/app), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/app)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу.
+```
+git clone --recurse-submodules https://github.com/yuriysydor1991/gimpxx.git
+```
 
-- гілка `applib` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/applib), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/applib)] яка складається з класів банарного виконуваного файлу з додатковими інфраструктурними класами для генерації підключаємої бібліотеки і заголовкових файлів (доступні для встановлення), що призначені для поширення коду бібліотеки для повторного перевикористання іншими бінарнами файлами.
+На Ubuntu 26.04 скрипт [`scripts/packages/install-ubuntu-26-04.sh`](/scripts/packages/install-ubuntu-26-04.sh) встановлює залежності побудови. Побудова потребує локалі, відмінної від C чи POSIX, наприклад `en_US.UTF-8`. Далі:
 
-- гілка `lib` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/lib), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/lib)] і яка призначена для предоставляння початкової інфраструктури для реалізації бібліотеки разом з заголовковими підключаємими файлами і документацією за необхідності.
+```
+meson setup build
+meson compile -C build
+./build/src/gimp/app/gimp-console-3.2 --version
+```
 
-- гілка `appMeson` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appMeson), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appMeson)] (**поточна**) яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу разом з системою побудови [Meson](https://mesonbuild.com/).
-
-- гілка `applibMeson` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/applibMeson), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/applibMeson)] - шаблон застосунку з виконуваним файлом та додатковою окремою бібліотекою з заголовковими підключаємими файлами (доступними для встановлення) для повторного використання коду бібліотеки в кількох застосунках, побудований системою [Meson](https://mesonbuild.com/), знаходиться проектами-споживачами на Meson через `dependency()` (pkg-config) з опціональною підтримкою CMake `find_package()`.
-
-- гілка `libMeson` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/libMeson), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/libMeson)] - шаблон бібліотеки з заголовковими підключаємими файлами і документацією, побудованою системою [Meson](https://mesonbuild.com/), знаходиться проектами-споживачами на Meson через `dependency()` (pkg-config) з опціональною підтримкою CMake `find_package()`.
-
-## Логування
-
-- гілка `appLog4Cpp5` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appLog4Cpp5), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appLog4Cpp5)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням багатофункціональної бібліотеки логування повідомлень [log4cpp](https://log4cpp.sourceforge.net/)
-
-- гілка `appBoostLog` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appBoostLog), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appBoostLog)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням бібліотеки логування повідомлень [Boost.Log](https://www.boost.org/doc/libs/latest/libs/log/doc/html/index.html)
-
-## Віконні системи / GUI
-
-- гілка `appQt6` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appQt6), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appQt6)] яка містить загальні класи для генерації бінарного виконуваного файлу разом з структурою заданою для розробки віконної програми на базі [Qt6](https://www.qt.io/development/qt-framework/qt6) разом з [QML](https://doc.qt.io/qt-6/qtqml-index.html).
-
-- гілка `appGtkmm3` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGtkmm3), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGtkmm3)] яка містить загальні класи для генерації бінарного виконуваного файлу разом з структурою заданою для розробки віконної програми на базі [Gtkmm](https://gtkmm.gnome.org/en/index.html)-3.0 з C++.
-
-- гілка `appGtkmm3Glade` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGtkmm3Glade), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGtkmm3Glade)] яка містить загальні класи для генерації бінарного виконуваного файлу разом з структурою заданою для розробки віконної програми на базі C++ з [Gtkmm](https://gtkmm.gnome.org/en/index.html)-3.0 і [Glade](https://en.wikipedia.org/wiki/Glade_Interface_Designer) - програми для створення візульних інтерфейсів.
-
-- гілка `appGtkmm4` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4)] яка містить загальні класи для генерації бінарного виконуваного файлу разом з структурою заданою для розробки віконної програми на базі [Gtkmm-4](https://gtkmm.gnome.org/en/index.html) з C++.
-
-- гілка `appGtkmm4Libadwaita` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4Libadwaita), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4Libadwaita)] із загальними класами програми для генерації єдиного виконуваного бінарного файлу, усе головне вікно якого побудоване з віджетів бібліотеки [libadwaita](https://gnome.pages.gitlab.gnome.org/libadwaita/) - `AdwApplicationWindow` з `AdwToolbarView`, `AdwHeaderBar` і розміщеним зверху заголовком з описом над логотипом, що заповнює усю вільну висоту - поряд з прив'язкою C++ [Gtkmm-4](https://gtkmm.gnome.org/en/index.html).
-
-- гілка `appwxWidgets` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appwxWidgets), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appwxWidgets)] яка містить загальні класи для генерації бінарного виконуваного файлу разом з структурою заданою для розробки кросплатформної віконної програми на базі [wxWidgets](https://www.wxwidgets.org/) з C++, що надається через CMake FetchContent.
-
-## Іконки / Звук / Ресурси
-
-- гілка `appFontAwesome` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appFontAwesome), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appFontAwesome)] яка містить загальні класи для генерації бінарного виконуваного файлу, що тримає цілий набір іконок [Font Awesome](https://fontawesome.com/) Free викачаним та недоторканим, робить кожну іконку кожного стилю доступною з коду C++ та записує маніфести Qt ([.qrc](https://doc.qt.io/qt-6/resources.html)) і Gtkmm ([GResource](https://docs.gtk.org/gio/struct.Resource.html)), які вбудовують обрані іконки у двійковий файл програми.
-
-- гілка `appKenneyAudio` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appKenneyAudio), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appKenneyAudio)] яка містить загальні класи для генерації бінарного виконуваного файлу, що тримає набори звукових ефектів [Kenney](https://kenney.nl/assets) під ліцензією CC0 завантаженими та недоторканими, робить кожен звук кожного набору доступним з коду C++ та записує маніфести Qt ([.qrc](https://doc.qt.io/qt-6/resources.html)) і Gtkmm ([GResource](https://docs.gtk.org/gio/struct.Resource.html)), які вбудовують обрані звуки у двійковий файл програми.
-
-- гілка `appOpenGameArtAudio` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appOpenGameArtAudio), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appOpenGameArtAudio)] яка містить загальні класи для генерації бінарного виконуваного файлу, що тримає дібрані набори звуків [OpenGameArt](https://opengameart.org) завантаженими та недоторканими, фіксує ліцензію кожного набору у маніфесті, який потрапляє до двійкового файлу, робить кожен звук кожного набору доступним з коду C++ та записує маніфести Qt ([.qrc](https://doc.qt.io/qt-6/resources.html)) і Gtkmm ([GResource](https://docs.gtk.org/gio/struct.Resource.html)), які вбудовують обрані звуки у двійковий файл програми.
-
-- гілка `appFreesoundAudio` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appFreesoundAudio), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appFreesoundAudio)] яка містить загальні класи для генерації бінарного виконуваного файлу, що тримає дібрані звуки [Freesound](https://freesound.org) завантаженими та недоторканими, фіксує ліцензію і сторінку-джерело кожного окремого звуку у маніфесті, який потрапляє до двійкового файлу, робить кожен звук доступним з коду C++ та записує маніфести Qt ([.qrc](https://doc.qt.io/qt-6/resources.html)) і Gtkmm ([GResource](https://docs.gtk.org/gio/struct.Resource.html)), які вбудовують обрані звуки у двійковий файл програми.
-
-## 3D / OpenGL / Vulkan
-
-- гілка `appSDL3` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appSDL3), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appSDL3)] яка містить загальні класи для генераці одинарного бінарного виконуваного файлу разом з початковою інфраструктурою для розробки у [OpenGL](https://www.opengl.org/) 3D разом з [SDL3](https://wiki.libsdl.org/SDL3/FrontPage) і набагато більше!
-
-- гілка `appSDL2` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appSDL2), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appSDL2)] яка містить загальні класи для генераці одинарного бінарного виконуваного файлу разом з початковою інфраструктурою для розробки у [OpenGL](https://www.opengl.org/) 3D разом з [SDL2](https://en.wikipedia.org/wiki/Simple_DirectMedia_Layer) і набагато більше!
-
-- гілка `appGtkmm4GLArea` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4GLArea), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4GLArea)] яка містить загальні класи для генерації одинарного бінарного виконуваного файлу, що вбудовує рендеринг [OpenGL](https://www.opengl.org/) безпосередньо у вікно [Gtkmm-4](https://gtkmm.gnome.org/en/index.html) за допомогою нативного віджета [Gtk::GLArea](https://docs.gtk.org/gtk4/class.GLArea.html).
-
-- гілка `appQt6GLArea` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appQt6GLArea), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appQt6GLArea)] яка містить загальні класи для генерації одинарного бінарного виконуваного файлу, що вбудовує рендеринг [OpenGL](https://www.opengl.org/) безпосередньо у вікно [Qt6](https://www.qt.io/development/qt-framework/qt6) [QML](https://doc.qt.io/qt-6/qtqml-index.html) за допомогою елемента сцен-графа [QQuickFramebufferObject](https://doc.qt.io/qt-6/qquickframebufferobject.html).
-
-- гілка `appSFML` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appSFML), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appSFML)] яка містить загальні класи для генераці одинарного бінарного виконуваного файлу разом з початковою інфраструктурою на базі мультимедійної бібліотеки [SFML](https://www.sfml-dev.org/) (2D графіка, вікна, ввід та доступ до [OpenGL](https://www.opengl.org/)), яка надається системним пакетом або резервним механізмом CMake FetchContent.
-
-- гілка `appFreeGlut` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appFreeGlut), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appFreeGlut)] яка містить загальні класи для генераці одинарного бінарного виконуваного файлу разом з початковою інфраструктурою для розробки у [OpenGL](https://www.opengl.org/) 3D разом з [FreeGlut](https://freeglut.sourceforge.net/).
-
-- гілка `appQt6Vulkan` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appQt6Vulkan), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appQt6Vulkan)] яка містить загальні класи для генераці одинарного бінарного виконуваного файлу, що створює інстанс [Vulkan](https://www.vulkan.org/) через нативний [Qt6](https://www.qt.io/development/qt-framework/qt6) [QVulkanInstance](https://doc.qt.io/qt-6/qvulkaninstance.html) (`Qt6::Gui`), перелічує доступні фізичні пристрої (відеокарти), виводить їхні властивості через журнал програми та показує порожнє чорне вікно, відмальоване засобами Vulkan ([QVulkanWindow](https://doc.qt.io/qt-6/qvulkanwindow.html), очищене до чорного кольору) протягом роботи циклу подій Qt.
-
-- гілка `appGtkmm4Vulkan` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4Vulkan), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4Vulkan)] яка містить загальні класи для генераці одинарного бінарного виконуваного файлу, що створює інстанс [Vulkan](https://www.vulkan.org/) через сирий завантажувач Vulkan, перелічує доступні фізичні пристрої (відеокарти) та виводить їхні властивості через журнал програми, після чого відмальовує чорний кадр засобами Vulkan у позаекранне зображення та показує його у вікні [Gtkmm-4](https://gtkmm.gnome.org/en/index.html) через Linux dma-buf ([Gdk::DmabufTexture](https://docs.gtk.org/gdk4/class.DmabufTexture.html)), оскільки GTK4 не має нативного віджета для рендерингу Vulkan.
-
-## Web / HTTP / Мережа
-
-- гілка `appWt4` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appWt4), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appWt4)] шаблон з інфраструктурою для швидкого старту реалізації Web-програми на основі [Wt C++](https://www.webtoolkit.eu/wt) фулстек фреймворку.
-
-- гілка `appBoostBeast` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appBoostBeast), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appBoostBeast)] котра містить інфраструктуру для швидкого старту розробки Web-програми з використанням швидкого HTTP сервера [Beast](https://www.boost.org/libs/beast) від Boost.
-
-- гілка `appCURL` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appCURL), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appCURL)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням бібліотеки-клієнта [CURL](https://en.wikipedia.org/wiki/CURL) для завантажень даних з мережі і яка підтримує багато протоколів (включаючи HTTP).
-
-## Системи керування базами даних (СУБД) / SQL / NoSQL
-
-- гілка `appPgSQLxx` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appPgSQLxx), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appPgSQLxx)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням СУБД [PostgreSQL](https://en.wikipedia.org/wiki/PostgreSQL)
-
-- гілка `appFirebird` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appFirebird), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appFirebird)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням СУБД [Firebird](https://firebirdsql.org/) через рідну клієнтську бібліотеку (fbclient)
-
-- гілка `appMySQLCppConn` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appMySQLCppConn), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appMySQLCppConn)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням СУБД [MySQL](https://uk.wikipedia.org/wiki/MySQL)
-
-- гілка `appSQLiteCpp3` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appSQLiteCpp3), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appSQLiteCpp3)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням СУБД [SQLite](https://en.wikipedia.org/wiki/SQLite) через бібліотеку [SQLiteCpp](https://github.com/SRombauts/SQLiteCpp)
-
-- гілка `appMongoDBCpp4` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appMongoDBCpp4), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appMongoDBCpp4)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням NoSQL СУБД [MongoDB](https://en.wikipedia.org/wiki/MongoDB)
-
-## Візуалізація Даних / Графіки / Діаграми
-
-- гілка `appMatPlotxx` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appMatPlotxx), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appMatPlotxx)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням [MatPlot++](https://alandefreitas.github.io/matplotplusplus/) - бібліотека для малювання графіків на основі прогарми [gnuplot](http://www.gnuplot.info/) і [Qt6](https://www.qt.io/development/qt-framework/qt6).
-
-- гілка `appPLplot` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appPLplot), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appPLplot)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням [PLplot](https://plplot.sourceforge.net/) - потужної бібліотеки генерації графіків котра використовується у наукових програмах з багатьма інтерфейсами для різних віконних систем і мов програмування, і можливостями експорту у найпопулярніші формати зображень (PNG, SVG, JPEG, GIF, PDF і інші).
-
-- гілка `appPGPLOT` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appPGPLOT), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appPGPLOT)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням [PGPLOT](https://sites.astro.caltech.edu/~tjp/pgplot/) - класичної бібліотеки наукової графіки, котра широко використовується у астрономії, інтегрованої через її інтерфейс мови C (cpgplot) і котра підтримує як оригінальну бібліотеку, так і її вільну заміну [giza](https://danieljprice.github.io/giza/).
-
-- гілка `appQt6ChartView` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appQt6ChartView), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appQt6ChartView)] котра містить інфраструктуру для швидкого старту візуалізації даних і малювання графіків безпосередньо у вікні [Qt6](https://www.qt.io/development/qt-framework/qt6) [QML](https://doc.qt.io/qt-6/qtqml-index.html) за допомогою вбудованого елемента [ChartView](https://doc.qt.io/qt-6/qml-qtcharts-chartview.html) з модуля [QtCharts](https://doc.qt.io/qt-6/qtcharts-index.html).
-
-## Карти
-
-- гілка `appGtkmm4LeafLet` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4LeafLet), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4LeafLet)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу з використанням [Gtkmm-4](https://gtkmm.gnome.org/en/index.html) з [WebKitGtk](https://webkitgtk.org/) і картами [LeafLet](https://leafletjs.com/)
-
-- гілка `appQt6LeafLet` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appQt6LeafLet), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appQt6LeafLet)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу разом з [Qt6](https://www.qt.io/development/qt-framework/qt6)/[QML](https://doc.qt.io/qt-6/qtqml-index.html) і [WebEngineView](https://doc.qt.io/qt-6/qml-qtwebengine-webengineview.html) модуля [Qt WebEngine](https://doc.qt.io/qt-6/qtwebengine-index.html) а також картами [LeafLet](https://leafletjs.com/)
-
-- гілка `appQt6QtLocation` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appQt6QtLocation), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appQt6QtLocation)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу що відображає мапу [OpenStreetMap](https://www.openstreetmap.org/) рідними засобами безпосередньо у вікні [Qt6](https://www.qt.io/development/qt-framework/qt6)/[QML](https://doc.qt.io/qt-6/qtqml-index.html) за допомогою елемента [Map](https://doc.qt.io/qt-6/qml-qtlocation-map.html) з модуля [Qt Location](https://doc.qt.io/qt-6/qtlocation-index.html) (рідний відповідник гілки appQt6LeafLet на основі [WebEngineView](https://doc.qt.io/qt-6/qml-qtwebengine-webengineview.html)).
-
-## Компʼютерний зір / Обробка зображень
-
-- гілка `appOpenCV` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appOpenCV), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appOpenCV)] котра містить інфраструктуру для швидкого старту розробки застосунку з використанням бібліотеки компʼютерного зору [OpenCV](https://opencv.org/) і її стандартного попередньо встановленого каскаду Хаара для виявлення обличь (`haarcascade_frontalface_default.xml`).
-
-- гілка `appCFITSIO` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appCFITSIO), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appCFITSIO)] яка містить загальні класи для генерації одинарного бінарного виконуваного файлу, що загортає бібліотеку [CFITSIO](https://heasarc.gsfc.nasa.gov/fitsio/) у невеликий контролер з основними викликами формату FITS (астрономічний формат зображень) - створення, відкриття, читання і запис зображення та доступ до ключових слів заголовку - і зчитує у класі Application зображення FITS, задане параметром командного рядка `--image`, звітуючи про нього через журнал проекту. Окремий компонент так само загортає бібліотеку [WCSLIB](https://www.atnf.csiro.au/people/mcalabre/WCS/), тому заголовок цього зображення також повідомляє, куди вказує його центр на небесній сфері.
-
-## Штучний інтелект / LLM
-
-- гілка `appCURLClaude` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appCURLClaude), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appCURLClaude)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу, що ставить [Claude](https://www.claude.com/) задане у командному рядку питання через [Anthropic API](https://platform.claude.com/docs/en/api/overview) і виводить отриману відповідь. Anthropic не постачає офіційного SDK для C++, тому гілка звертається до API напряму за допомогою бібліотек [libcurl](https://curl.se/libcurl/) та [nlohmann JSON](https://github.com/nlohmann/json) і не містить жодної сторонньої обгортки API.
-
-- гілка `appCURLChatGPT` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appCURLChatGPT), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appCURLChatGPT)] яка містить загальні інфраструктурні класи програми для генерації одинарного бінарного виконуваного файлу, що ставить [ChatGPT](https://chatgpt.com/) задане у командному рядку питання через точку доступу responses [OpenAI API](https://developers.openai.com/api/docs) і виводить отриману відповідь. OpenAI не постачає офіційного SDK для C++, тому гілка звертається до API напряму за допомогою бібліотек [libcurl](https://curl.se/libcurl/) та [nlohmann JSON](https://github.com/nlohmann/json) і не містить жодної сторонньої обгортки API.
-
-- гілка `appWhisperCPP` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appWhisperCPP), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appWhisperCPP)] яка містить загальні інфраструктурні класи програми для генерації одинарного бінарного виконуваного файлу, що розпізнає мовлення бібліотекою [whisper.cpp](https://github.com/ggml-org/whisper.cpp): невеликий контролер захоплює типовий мікрофон системи через аудіопідсистему [SDL2](https://www.libsdl.org/), розрізає захоплене аудіо на висловлювання за паузами мовлення і розпізнає їх, тож клас Application записує кожне розпізнане висловлювання у журнал макросом `LOGI`. Конфігурування завантажує багатомовну модель (серед інших мов - англійську й українську) скриптом завантаження whisper.cpp.
-
-- гілка `appDarknetXX` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appDarknetXX), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appDarknetXX)] яка містить загальні інфраструктурні класи програми для генерації одинарного бінарного виконуваного файлу, що виявляє об'єкти на зображенні засобами [darknetxx](https://github.com/yuriysydor1991/darknetxx) (порту нейронної мережі [Darknet](https://github.com/AlexeyAB/darknet) на C++): невеликий контролер завантажує мережу Darknet з cfg-файлу з вагами оригінального файлу `*.weights` або файлу `*.dxxwjz1` darknetxx чи всю мережу з файлу `*.dxxwjz2` darknetxx, тож клас Application записує кожен виявлений об'єкт у журнал макросом `LOGI`. Конфігурування завантажує вихідні коди darknetxx, збирає її мережеве ядро у виконуваний файл і завантажує ваги мережі YOLOv4-tiny, навченої на наборі даних COCO.
-
-## Синтез мовлення (TTS)
-
-- гілка `appESpeakNG` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appESpeakNG), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appESpeakNG)] яка містить загальні інфраструктурні класи програми для генерації одинарного бінарного виконуваного файлу, що промовляє заданий у командному рядку текст бібліотекою синтезу мовлення [eSpeak NG](https://github.com/espeak-ng/espeak-ng): незалежні від рушія класи синтезу мовлення відтворюють синтезоване мовлення типовим аудіопристроєм через аудіопідсистему [SDL2](https://www.libsdl.org/) або записують його у WAV-файл, тож інший рушій мовлення заступає eSpeak NG одним класом-контролером. eSpeak NG розмовляє понад сотнею мов (серед них англійською й українською) і поширюється за ліцензією GPL-3.0-or-later, яку успадковує поширюваний виконуваний файл.
-
-- гілка `appRHVoice` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appRHVoice), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appRHVoice)] яка містить загальні інфраструктурні класи програми для генерації одинарного бінарного виконуваного файлу, що промовляє заданий у командному рядку текст бібліотекою синтезу мовлення [RHVoice](https://github.com/RHVoice/RHVoice) та її англійськими (Alan тощо) й українськими (Anatol, Natalia тощо) голосами: незалежні від рушія класи синтезу мовлення відтворюють синтезоване мовлення типовим аудіопристроєм через аудіопідсистему [SDL2](https://www.libsdl.org/) або записують його у WAV-файл, ті самі, що й у гілці `appESpeakNG`, з класом-контролером RHVoice замість контролера eSpeak NG. Бібліотека RHVoice поширюється за ліцензією LGPL-2.1-or-later, а її голоси мають власні ліцензії, частина з яких забороняє комерційне використання чи зміни (через це Debian тримає RHVoice у компоненті non-free).
-
-- гілка `appPiperTTS` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appPiperTTS), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appPiperTTS)] яка містить загальні інфраструктурні класи програми для генерації одинарного бінарного виконуваного файлу, що промовляє заданий у командному рядку текст нейронною бібліотекою синтезу мовлення [Piper](https://github.com/OHF-Voice/piper1-gpl) (її C/C++ бібліотекою `libpiper`, зібраною з вихідних кодів разом з espeak-ng, якою вона перетворює текст на фонеми, а голоси виконує [onnxruntime](https://onnxruntime.ai/)): незалежні від рушія класи синтезу мовлення відтворюють синтезоване мовлення типовим аудіопристроєм через аудіопідсистему [SDL2](https://www.libsdl.org/) або записують його у WAV-файл. Конфігурування завантажує англійський голос `en_US-lessac-medium`, а параметр `--voice` приймає будь-який інший, серед них і український `uk_UA-ukrainian_tts-medium`. Piper поширюється за ліцензією GPL-3.0-or-later, яку успадковує поширюваний виконуваний файл, а кожен голос має власну ліцензію.
-
-- гілка `appSherpaONNX` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appSherpaONNX), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appSherpaONNX)] яка містить загальні інфраструктурні класи програми для генерації одинарного бінарного виконуваного файлу, що промовляє заданий у командному рядку текст офлайн нейромережевим синтезом мовлення [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx): типово говорить багатомовна модель [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M), яку завантажує конфігурування, а моделі [MeloTTS](https://github.com/myshell-ai/MeloTTS), [Piper](https://github.com/rhasspy/piper) та інші VITS-моделі sherpa-onnx говорять через той самий параметр `--voice`. Незалежні від рушія класи синтезу мовлення відтворюють синтезоване мовлення типовим аудіопристроєм через аудіопідсистему [SDL2](https://www.libsdl.org/) або записують його у WAV-файл. Конфігурування завантажує та збирає sherpa-onnx, яка виконує моделі бібліотекою onnxruntime дистрибутиву або власною попередньо зібраною. sherpa-onnx та Kokoro-82M поширюються за ліцензією Apache-2.0, MeloTTS — за ліцензією MIT, а кожен голос Piper має ліцензію своєї картки моделі.
-
-## System / DBus
-
-- гілка `appSDBusCxxClient` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appSDBusCxxClient), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appSDBusCxxClient)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу з використанням [Kistler-Group's sdbus-c++](https://github.com/Kistler-Group/sdbus-cpp.git) бібліотеки для побудови клієнта сервісів розміщених на шині [DBus](https://uk.wikipedia.org/wiki/D-Bus)
-
-- гілка `appSDBusCxxServer` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appSDBusCxxServer), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appSDBusCxxServer)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу з використанням [Kistler-Group's sdbus-c++](https://github.com/Kistler-Group/sdbus-cpp.git) бібліотеки для побудови сервера на шині [DBus](https://uk.wikipedia.org/wiki/D-Bus).
-
-- гілка `appQt6QtDBusClient` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appQt6QtDBusClient), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appQt6QtDBusClient)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу що зчитує загальну системну інформацію зі служби [systemd-hostnamed](https://www.freedesktop.org/software/systemd/man/latest/org.freedesktop.hostname1.html) через шину [DBus](https://uk.wikipedia.org/wiki/D-Bus) за допомогою рідного модуля [Qt6](https://www.qt.io/development/qt-framework/qt6) [QtDBus](https://doc.qt.io/qt-6/qtdbus-index.html) і виводить її у журнал застосунку (відповідник гілки appSDBusCxxClient на основі sdbus-c++ для фреймворку Qt6).
-
-- гілка `appGtkmm4GDBusClient` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4GDBusClient), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGtkmm4GDBusClient)] яка містить загальні інфраструктурні класи програми для генераці одинарного бінарного виконуваного файлу що зчитує загальну системну інформацію зі служби [systemd-hostnamed](https://www.freedesktop.org/software/systemd/man/latest/org.freedesktop.hostname1.html) через шину [DBus](https://uk.wikipedia.org/wiki/D-Bus) за допомогою рідного стеку GLib [GDBus](https://docs.gtk.org/gio/) через [Gtkmm-4](https://gtkmm.gnome.org/en/index.html)/giomm `Gio::DBus` і виводить її у журнал застосунку (відповідник гілки appSDBusCxxClient на основі sdbus-c++ для фреймворку gtkmm4).
-
-## Стиснення / розпакування даних
-
-- гілка `appZlib` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appZlib), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appZlib)] яка містить загальні класи для генераці одинарного бінарного виконуваного файлу, що загортає бібліотеку стиснення [zlib](https://www.zlib.net/) у невеликий контролер з простими методами стиснення / розпакування (у пам'яті та у / з gzip `.gz` файлів) і демонструє цикл стиснення + розпакування у класі Application.
-
-- гілка `appLZMA` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appLZMA), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appLZMA)] яка містить загальні класи для генераці одинарного бінарного виконуваного файлу, що загортає бібліотеку стиснення [liblzma](https://tukaani.org/xz/) (XZ Utils) у невеликий контролер з простими методами стиснення / розпакування у пам'яті над контейнером `.xz` (LZMA2) і демонструє цикл стиснення + розпакування у класі Application.
-
-## Скриптові рушії / JavaScript
-
-- гілка `appV8` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appV8), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appV8)] яка містить загальні класи для генерації одинарного бінарного виконуваного файлу, що вбудовує рушій JavaScript [V8](https://v8.dev/): невеликий контролер ініціалізує весь V8, виконує заданий класом Application код JavaScript і привʼязує обʼєкт JavaScript `console` до журналу проекту, тож виклик `console.log("Hello, V8! Insert your JavaScript code here!")` у класі Application друкує саме через нього.
-
-## Переклади / Інтернаціоналізація
-
-- гілка `appGettext` розміщена на [[GitHub](https://github.com/yuriysydor1991/cpp-app-template/tree/appGettext), [GitLab](https://gitlab.com/yuriysydor1991/cpp-app-template/tree/appGettext)] яка містить загальні класи для генерації одинарного бінарного виконуваного файлу, що розмовляє мовою користувача через каталоги повідомлень [GNU gettext](https://savannah.gnu.org/projects/gettext): невеликий контролер вмикає локаль повідомлень середовища і прив'язує каталоги, скомпільовані з перекладів директорії `po`, тож повідомлення довідки, версії і привітання класу Application виводяться українською мовою під локаллю `uk_UA.UTF-8`, а цілі `gettext-pot` і `gettext-update-po` підтримують переклади у відповідності з вихідними кодами.
-
-
-Редагуй поточний файл `README.md` і `CHANGELOG.md` щоб документація відповідала впровадженому коду. Для перекладів даного файлу `README.md`:
-- `uk_UA` за відносною адресою doc/README.uk_UA.md
+Модульні та компонентні C++ тести вмикаються опціями `-DENABLE_UNIT_TESTS=true -DENABLE_COMPONENT_TESTS=true` і запускаються командою `meson test -C build --suite gimpxx`.
 
 # Зміст документації
 
