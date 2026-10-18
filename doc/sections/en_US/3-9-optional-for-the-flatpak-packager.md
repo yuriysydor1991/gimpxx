@@ -1,0 +1,19 @@
+## Optional for the flatpak packager
+
+In order to generate the project flatpak package install the `flatpak-builder` command:
+
+```
+sudo apt install -y flatpak flatpak-builder
+```
+
+You'll also need the one of it's target SDK which may be installed by a command that may look like this:
+
+```
+flatpak install --user flathub runtime/org.freedesktop.Platform/x86_64/24.08 runtime/org.freedesktop.Sdk/x86_64/24.08
+```
+
+The `24.08` is the `runtime-version` the [misc/flatpak.conf.json.meson.in](/misc/flatpak.conf.json.meson.in) manifest builds against: change both together to use another runtime. Consult the flatpak documentation on how to list all available options.
+
+The `flatpak` target installs the runtime and the SDK it needs from the `flathub` remote on its own, so the command above only preinstalls them.
+
+Look for the details at the [Enabling the flatpak package generation support](/doc/sections/en_US/5-11-enabling-the-flatpak-package-generation-support.md).

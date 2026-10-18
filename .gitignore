@@ -1,0 +1,15 @@
+build/*
+builddir/*
+build-*/*
+.vscode
+.idea/*
+html/*
+latex/*
+doc/html/*
+doc/latex/*
+out/*
+*.log
+gmon.out
+analysis.txt
+
+.claude/*

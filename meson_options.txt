@@ -70,3 +70,219 @@ option('javascript',        type: 'feature', value: 'auto', description: 'Instal
 option('lua',               type: 'boolean', value: false,  description: 'Install Lua plug-ins (experimental)')
 
 option('debug-self-in-build', type: 'boolean', value: false, description: 'Run in-build GIMP within gdb/lldb for debugging purpose')
+
+################################################################################
+# The cpp-app-template options of gimpxx. They are upper case, so they never
+# collide with the GIMP ones above.
+
+option(
+  'ENABLE_DOC_DOXYGEN',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the documentation build with the Doxygen'
+)
+
+option(
+  'DOXYGEN_DO_INSTALL',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the generated documentation installation'
+)
+
+option(
+  'ENABLE_UNIT_TESTS',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the unit tests'
+)
+
+option(
+  'ENABLE_COMPONENT_TESTS',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the component tests'
+)
+
+option(
+  'ENABLE_CLANGFORMAT',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the code format with a clang-format.'
+)
+
+option(
+  'ENABLE_CLANG_TIDY',
+  type: 'boolean',
+  value: false,
+  description: 'Set to true to enable the clang-tidy code check target.'
+)
+
+option(
+  'ENABLE_CPPCHECK',
+  type: 'boolean',
+  value: false,
+  description: 'Set to true to enable the cppcheck execution target.'
+)
+
+option(
+  'ENABLE_VALGRIND',
+  type: 'boolean',
+  value: false,
+  description: 'Set to true to enable the valgrind memory check execution target.'
+)
+
+option(
+  'ENABLE_FLATPAK',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the flatpak package creation target from the current project'
+)
+
+option(
+  'ENABLE_SNAP',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the snap package creation target from the current project'
+)
+
+option(
+  'ENABLE_DEB',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the deb package creation target from the current project'
+)
+
+option(
+  'ENABLE_RPM',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the rpm package creation target from the current project'
+)
+
+option(
+  'ENABLE_FREEBSD_PKG',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the FreeBSD pkg package creation target from the current project'
+)
+
+option(
+  'ENABLE_APPIMAGE',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the AppImage portable bundle creation target from the current project'
+)
+
+option(
+  'ENABLE_WIX',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the WIX MSI installer creation target (MS Windows hosts only)'
+)
+
+option(
+  'ENABLE_DOCKER',
+  type: 'boolean',
+  value: false,
+  description: 'Enables the docker container single build and run target in the current project'
+)
+
+option(
+  'ENABLE_SANITIZERS',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the address+leak+undefined sanitizers compile options'
+)
+
+option(
+  'ENABLE_SANITIZERS_THREADS',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the thread sanitizer compile options'
+)
+
+option(
+  'ENABLE_GPROF',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the gprof application profiler analysis target'
+)
+
+option(
+  'ENABLE_CALLGRIND',
+  type: 'boolean',
+  value: false,
+  description: 'Enable the valgrind (callgrind) application profiler analysis target'
+)
+
+option(
+  'ENABLE_LIBCURL',
+  type: 'boolean',
+  value: false,
+  description: 'Set to true to enable the libcurl integration (probes the system installation)'
+)
+
+option(
+  'ENABLE_LIBXML2',
+  type: 'boolean',
+  value: false,
+  description: 'Set to true to enable the libxml2 integration (probes the system installation)'
+)
+
+option(
+  'ENABLE_NLOHMANN_JSON',
+  type: 'boolean',
+  value: false,
+  description: 'Set to true to enable the nlohmann_json header-only library (probes the system installation)'
+)
+
+option(
+  'ENABLE_OPENCV',
+  type: 'boolean',
+  value: false,
+  description: 'Set to true to enable the OpenCV integration (probes the system installation)'
+)
+
+option(
+  'ENABLE_LOGS_MICROSECONDS_TIME',
+  type: 'boolean',
+  value: true,
+  description: 'Include the microseconds field into emitted log messages'
+)
+
+option(
+  'DEFAULT_LOG_FILE_PATH',
+  type: 'string',
+  value: '',
+  description: 'Default directory where the log file is created (empty - current working directory)'
+)
+
+option(
+  'MAX_LOG_LEVEL',
+  type: 'integer',
+  value: 3,
+  min: 0,
+  max: 5,
+  description: 'Maximum severity of the compiled log messages. Error=1, Warning=2, Info=3, Debug=4, Trace=5. The errors are always compiled in.'
+)
+
+option(
+  'PROJECT_MAINTAINER',
+  type: 'string',
+  value: 'Your Name',
+  description: 'Project maintainer full name (used by packager targets)'
+)
+
+option(
+  'PROJECT_MAINTAINER_EMAIL',
+  type: 'string',
+  value: 'yourname@your.email.org',
+  description: 'Project maintainer email (used by packager targets)'
+)
+
+option(
+  'PACKAGE_OS',
+  type: 'string',
+  value: '',
+  description: 'The destination OS of the package file names (e.g. ubuntu-24.04, freebsd-15.1), the build host one when empty'
+)
