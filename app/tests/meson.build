@@ -60,9 +60,9 @@ foreach test_name : app_tests
   test(test_name,
     test_exe,
     env: [
-      'GIMP_TESTING_ABS_TOP_SRCDIR='  + meson.project_source_root(),
-      'GIMP_TESTING_ABS_TOP_BUILDDIR='+ meson.project_build_root(),
-      'GIMP_TESTING_PLUGINDIRS='      + meson.project_build_root()/'plug-ins'/'common',
+      'GIMP_TESTING_ABS_TOP_SRCDIR='  + gimp_source_root,
+      'GIMP_TESTING_ABS_TOP_BUILDDIR='+ gimp_build_root,
+      'GIMP_TESTING_PLUGINDIRS='      + gimp_build_root/'plug-ins'/'common',
       'UI_TEST=yes',
     ],
     suite: 'app',
@@ -89,11 +89,11 @@ tests = [
 ]
 
 test_env=gimp_run_env
-test_env.set('GIMP_TESTING_ABS_TOP_SRCDIR', meson.project_source_root())
-test_env.set('GIMP_TESTING_ABS_TOP_BUILDDIR', meson.project_build_root())
+test_env.set('GIMP_TESTING_ABS_TOP_SRCDIR', gimp_source_root)
+test_env.set('GIMP_TESTING_ABS_TOP_BUILDDIR', gimp_build_root)
 test_env.append('GIMP_TESTING_PLUG_INS', 'common/file-png', separator: ':')
 
-run_python_test = find_program(meson.project_source_root() / 'libgimp/tests/libgimp-run-python-test.py')
+run_python_test = find_program(gimp_source_root / 'libgimp/tests/libgimp-run-python-test.py')
 foreach testinfo : tests
   test_name = testinfo['name']
   basename = 'test-' + testinfo['name']

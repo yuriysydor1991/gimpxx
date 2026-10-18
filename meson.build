@@ -9,6 +9,12 @@ project('gimp',
   ],
 )
 
+# The roots of the GIMP tree. They are used instead of the
+# meson.project_*_root() and meson.global_*_root() calls, so the tree
+# builds the same once it is a subdirectory of the gimpxx project.
+gimp_source_root = meson.current_source_dir()
+gimp_build_root  = meson.current_build_dir()
+
 project_url = 'https://gitlab.gnome.org/GNOME/gimp'
 project_url_issues = 'https://www.gimp.org/bugs/' #see Infrastructure/gimp-web@d6d0559d
 
@@ -1750,16 +1756,12 @@ conf.set_quoted('RELOC_LIBDIR',    get_option('libdir'))
   #####   ####  #    # #      #  ####     #       # ###### ######  ####
 
 
-# git-version.h is already present and not generated if dist tarball
-is_git_repository = run_command(python, '-c',
-  'import sys,os; sys.exit(0 if os.path.exists(".git") else 1)',
-  check: false
-).returncode() == 0
+# The repository root is the top-level project's one, also when the GIMP
+# tree is a subdirectory of it.
+is_git_repository = fs.exists(meson.global_source_root() / '.git')
 
-has_version_h = run_command(python, '-c',
-  'import sys,os; sys.exit(0 if os.path.exists("git-version.h") else 1)',
-  check: false
-).returncode() == 0
+# git-version.h is already present and not generated if dist tarball
+has_version_h = fs.exists(gimp_source_root / 'git-version.h')
 
 generate_version_h = is_git_repository or not has_version_h
 if generate_version_h
@@ -1856,18 +1858,15 @@ if is_git_repository
 endif
 
 if is_git_repository
-  has_gimp_data = run_command(python, '-c',
-    'import sys,os; sys.exit(0 if os.path.exists("gimp-data/meson.build") else 1)',
-    check: false
-  ).returncode() == 0
+  has_gimp_data = fs.exists(gimp_source_root / 'gimp-data/meson.build')
 
   if not has_gimp_data
     error('gimp-data submodule not present. Run: git submodule update --init')
   endif
 
   if git.found()
-    git_submodule_check = run_command(meson.project_source_root() / 'tools/check-gimp-data.py',
-                                      check: false)
+    git_submodule_check = run_command(gimp_source_root / 'tools/check-gimp-data.py',
+                                      gimp_source_root, check: false)
     if git_submodule_check.returncode() != 0
       submodule_warning = 'gimp-data submodule seems outdated. Possibly run from the source repository: git submodule update'
       warning(submodule_warning)
@@ -1952,7 +1951,7 @@ endif
 
 meson.add_dist_script('tools/meson_dist_script.py',
                       generate_version_h ?  gitversion_h.full_path() : gitversion_h,
-                      meson.project_source_root(), meson.project_build_root())
+                      gimp_source_root, gimp_build_root)
 
 ################################################################################
 # Subdirs: part 1
@@ -2010,8 +2009,8 @@ subdir('desktop')
 # tool.
 
 gimp_run_env=environment()
-gimp_run_env.set('GIMP_GLOBAL_BUILD_ROOT',  meson.global_build_root())
-gimp_run_env.set('GIMP_GLOBAL_SOURCE_ROOT', meson.global_source_root())
+gimp_run_env.set('GIMP_GLOBAL_BUILD_ROOT',  gimp_build_root)
+gimp_run_env.set('GIMP_GLOBAL_SOURCE_ROOT', gimp_source_root)
 if get_option('debug-self-in-build')
   if not platform_windows and not platform_osx
     db = find_program(['gdb', 'lldb'], required: true)
@@ -2046,46 +2045,46 @@ if meson.can_run_host_binaries() and have_gobject_introspection
   gimp_exe_depends = [gimp_real_exe, libgimp_gir, libgimpui_gir] + plugin_custom_targets
   gimp_run_env.set('GIMP_SELF_IN_BUILD', gimp_real_exe.full_path())
 
-  menu_paths=meson.global_build_root() / 'menus:' + meson.global_source_root() / 'menus'
+  menu_paths=gimp_build_root / 'menus:' + gimp_source_root / 'menus'
   gimp_run_env.set('GIMP_TESTING_MENUS_PATH', menu_paths)
 
-  gimp_run_env.set('GIMP3_SYSCONFDIR', meson.global_source_root() / 'etc')
+  gimp_run_env.set('GIMP3_SYSCONFDIR', gimp_source_root / 'etc')
 
   gimp_run_env.set('GIMP_TESTING_PLUG_INS', 'python/python-eval/')
 
-  gimp_run_env.set('GIMP_TESTING_INTERPRETER_DIRS', meson.global_build_root() / 'plug-ins/python/')
-  gimp_run_env.append('GIMP_TESTING_INTERPRETER_DIRS', meson.global_build_root() / 'extensions/')
-  gimp_run_env.set('GIMP_TESTING_ENVIRON_DIRS', meson.global_build_root() / 'data/environ/')
+  gimp_run_env.set('GIMP_TESTING_INTERPRETER_DIRS', gimp_build_root / 'plug-ins/python/')
+  gimp_run_env.append('GIMP_TESTING_INTERPRETER_DIRS', gimp_build_root / 'extensions/')
+  gimp_run_env.set('GIMP_TESTING_ENVIRON_DIRS', gimp_build_root / 'data/environ/')
 
   # Makes build errors output way less polluted, making easier to debug
-  gimp_run_env.set('GIMP3_LOCALEDIR', meson.global_build_root() / 'po-plug-ins')
+  gimp_run_env.set('GIMP3_LOCALEDIR', gimp_build_root / 'po-plug-ins')
 
   gimp_run_env.prepend('GI_TYPELIB_PATH', prefix / 'lib/girepository-1.0/')
   if platform_osx
-    gimp_run_env.prepend('GI_TYPELIB_PATH', meson.global_build_root() / 'libgimp/tmp')
+    gimp_run_env.prepend('GI_TYPELIB_PATH', gimp_build_root / 'libgimp/tmp')
   else
-    gimp_run_env.prepend('GI_TYPELIB_PATH', meson.global_build_root() / 'libgimp')
+    gimp_run_env.prepend('GI_TYPELIB_PATH', gimp_build_root / 'libgimp')
   endif
 
-  gimp_run_env.prepend('LD_LIBRARY_PATH', meson.global_build_root() / 'libgimp')
-  gimp_run_env.prepend('LD_LIBRARY_PATH', meson.global_build_root() / 'libgimpbase')
-  gimp_run_env.prepend('LD_LIBRARY_PATH', meson.global_build_root() / 'libgimpcolor')
-  gimp_run_env.prepend('LD_LIBRARY_PATH', meson.global_build_root() / 'libgimpconfig')
-  gimp_run_env.prepend('LD_LIBRARY_PATH', meson.global_build_root() / 'libgimpmath')
-  gimp_run_env.prepend('LD_LIBRARY_PATH', meson.global_build_root() / 'libgimpmodule')
-  gimp_run_env.prepend('LD_LIBRARY_PATH', meson.global_build_root() / 'libgimpthumb')
-  gimp_run_env.prepend('LD_LIBRARY_PATH', meson.global_build_root() / 'libgimpwidgets')
+  gimp_run_env.prepend('LD_LIBRARY_PATH', gimp_build_root / 'libgimp')
+  gimp_run_env.prepend('LD_LIBRARY_PATH', gimp_build_root / 'libgimpbase')
+  gimp_run_env.prepend('LD_LIBRARY_PATH', gimp_build_root / 'libgimpcolor')
+  gimp_run_env.prepend('LD_LIBRARY_PATH', gimp_build_root / 'libgimpconfig')
+  gimp_run_env.prepend('LD_LIBRARY_PATH', gimp_build_root / 'libgimpmath')
+  gimp_run_env.prepend('LD_LIBRARY_PATH', gimp_build_root / 'libgimpmodule')
+  gimp_run_env.prepend('LD_LIBRARY_PATH', gimp_build_root / 'libgimpthumb')
+  gimp_run_env.prepend('LD_LIBRARY_PATH', gimp_build_root / 'libgimpwidgets')
 
   if platform_windows
     # On Windows, DLL are found through PATH rather than LD_LIBRARY_PATH.
-    gimp_run_env.prepend('PATH', meson.global_build_root() / 'libgimp')
-    gimp_run_env.prepend('PATH', meson.global_build_root() / 'libgimpbase')
-    gimp_run_env.prepend('PATH', meson.global_build_root() / 'libgimpcolor')
-    gimp_run_env.prepend('PATH', meson.global_build_root() / 'libgimpconfig')
-    gimp_run_env.prepend('PATH', meson.global_build_root() / 'libgimpmath')
-    gimp_run_env.prepend('PATH', meson.global_build_root() / 'libgimpmodule')
-    gimp_run_env.prepend('PATH', meson.global_build_root() / 'libgimpthumb')
-    gimp_run_env.prepend('PATH', meson.global_build_root() / 'libgimpwidgets')
+    gimp_run_env.prepend('PATH', gimp_build_root / 'libgimp')
+    gimp_run_env.prepend('PATH', gimp_build_root / 'libgimpbase')
+    gimp_run_env.prepend('PATH', gimp_build_root / 'libgimpcolor')
+    gimp_run_env.prepend('PATH', gimp_build_root / 'libgimpconfig')
+    gimp_run_env.prepend('PATH', gimp_build_root / 'libgimpmath')
+    gimp_run_env.prepend('PATH', gimp_build_root / 'libgimpmodule')
+    gimp_run_env.prepend('PATH', gimp_build_root / 'libgimpthumb')
+    gimp_run_env.prepend('PATH', gimp_build_root / 'libgimpwidgets')
   elif platform_osx
     gimp_exe_depends += [patched_libgimp_gir, patched_libgimpui_gir]
 

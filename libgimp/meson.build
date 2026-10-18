@@ -766,7 +766,7 @@ if host_machine.system() != 'emscripten'
     env: nm.found() ? { 'NM': nm.full_path() } : {},
     output: [ 'check-def-files', ],
     command: [
-      python, meson.project_source_root() / 'tools' / 'defcheck.py', '@INPUT@',
+      python, gimp_source_root / 'tools' / 'defcheck.py', '@INPUT@',
     ],
     build_by_default: true,
   )

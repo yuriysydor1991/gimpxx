@@ -40,7 +40,7 @@ if isocodes.found()
                              include_directories: [ rootInclude, appInclude ],
                              dependencies: [ native_gio ],
                              c_args: [
-                               '-DSRCDIR="@0@"'.format(meson.project_source_root()),
+                               '-DSRCDIR="@0@"'.format(gimp_source_root),
                              ],
                              native: true,
                              install: false)
