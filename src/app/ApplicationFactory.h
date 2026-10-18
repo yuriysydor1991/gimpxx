@@ -1,0 +1,116 @@
+#ifndef YOUR_CPP_APP_TEMPLATE_PROJECT_APPLICATIONFACTORY_CLASS_H
+#define YOUR_CPP_APP_TEMPLATE_PROJECT_APPLICATIONFACTORY_CLASS_H
+
+#include <memory>
+
+#include "src/app/ApplicationContext.h"
+#include "src/app/CommandLineParser.h"
+#include "src/app/applications/IApplication.h"
+#include "src/app/signals-handlers/ISignalsHandler.h"
+
+namespace app
+{
+
+/**
+ * @brief An ApplicationFactory contains main routines to create, configure and
+ * start the application in accordance of the given parameters.
+ *
+ * It starts GIMP in the order the main() of GIMP did: the platform, the signal
+ * handlers and the process first, the command line next, the application at
+ * last.
+ */
+class ApplicationFactory
+{
+ public:
+  virtual ~ApplicationFactory() = default;
+  ApplicationFactory() = default;
+
+  /**
+   * @brief Creates the default context to pass to the application creation
+   * routine and/or to the created IApplication's instance run method. It
+   * refers to the GIMP start-up options.
+   *
+   * @param gargc Count of a given command line parameters.
+   * @param gargv An array of a given command line parameters.
+   *
+   * @return Returns the created application context.
+   */
+  virtual std::shared_ptr<ApplicationContext> create_default_context(
+      int& gargc, char**& gargv);
+
+  /**
+   * @brief Creates a command line parser instance to parse application context
+   * argv data.
+   *
+   * @return Returns created parser instance.
+   */
+  virtual std::shared_ptr<CommandLineParser> create_default_arg_parser();
+
+  /**
+   * @brief Creates the OS signals handler instance, the one of GIMP.
+   *
+   * @return Returns created signals handler instance.
+   */
+  virtual std::shared_ptr<ISignalsHandler> create_default_signals_handler();
+
+  /**
+   * @brief Creates default instance for the application implementation.
+   *
+   * @return Returns created default application.
+   */
+  virtual std::shared_ptr<IApplication> create_default_application();
+
+  /**
+   * @brief Instantiates a default version message printer.
+   *
+   * @return Instantiates a default version message printer and returns it.
+   */
+  virtual std::shared_ptr<IApplication> create_version_printer();
+
+  /**
+   * @brief Inits the logging subsystem with no log file, printing the
+   * warnings and the errors only. They go to the standard error stream, so
+   * the GIMP output stays the only one of the standard output.
+   *
+   * @return Returns false if the logging subsystem can not be initialized.
+   */
+  virtual bool init_logging();
+
+  /**
+   * @brief Creates application in accordance with a given context data.
+   *
+   * @param ctx A filled ApplicationContext instance to check which application
+   * to create.
+   *
+   * @return Returns created application.
+   */
+  virtual std::shared_ptr<IApplication> create_application(
+      std::shared_ptr<ApplicationContext> ctx);
+
+  /**
+   * @brief Creates all necessary instances and calls the appropriate
+   * IApplication instance' run method.
+   *
+   * @param gargc Count of a given command line parameters.
+   * @param gargv An array of a given command line parameters.
+   *
+   * @return Returns application run status. Must return the zero value in case
+   * of success and a non zero value in case of any error.
+   */
+  virtual int run(int& gargc, char**& gargv);
+
+  /**
+   * @brief A convenience method to call a run without the factory instance
+   * inside the main function.
+   *
+   * @param gargc Count of a given command line parameters.
+   * @param gargv An array of a given command line parameters.
+   *
+   * @return Returns application run status. See run method.
+   */
+  static int execute(int& gargc, char**& gargv);
+};
+
+}  // namespace app
+
+#endif  // YOUR_CPP_APP_TEMPLATE_PROJECT_APPLICATIONFACTORY_CLASS_H

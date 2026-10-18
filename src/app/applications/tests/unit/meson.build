@@ -1,0 +1,2 @@
+subdir('Application')
+subdir('ApplicationVersionPrinter')

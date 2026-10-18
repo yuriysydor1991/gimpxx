@@ -1,0 +1,2 @@
+subdir('GimpSignalsHandler')
+subdir('SignalsHandler')

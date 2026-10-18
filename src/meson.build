@@ -1,3 +1,28 @@
+configuration_inc = [
+  configuration_inc,
+  include_directories('.')
+]
+
+if get_option('ENABLE_UNIT_TESTS') or get_option('ENABLE_COMPONENT_TESTS')
+  gtest_dep = dependency('gtest', required: true)
+  gmock_dep = dependency('gmock', required: true)
+  gtest_main_dep = dependency('gtest_main', required: true)
+
+  gtest_deps = [gtest_dep, gmock_dep, gtest_main_dep] + gimpxx_sanitizers_deps
+endif
+
+# The logging subsystem goes first: it sets the project wide log macros
+# arguments, which Meson accepts before the first target only.
+subdir('log')
+subdir('app')
+
+# The C++ entry layer of gimpxx, which starts GIMP. The GIMP tree calls
+# add_project_arguments() as well, so the layer can not be a target before
+# it: src/gimp/app/meson.build builds it of these sources and links the
+# GIMP executables of it.
+gimpxx_sources = files('main.cpp') + app_sources + log_sources
+gimpxx_includes = configuration_inc
+
 # The original GIMP tree.
 subdir('gimp')
 
@@ -56,4 +81,18 @@ if get_option('ENABLE_GPROF')
     build_always_stale: true,
     console: true
   )
+endif
+
+# The tests are targets too, so they come after the GIMP tree as well.
+if get_option('ENABLE_COMPONENT_TESTS')
+  subdir('log/tests/component/log')
+  subdir('log/default-logger/tests/component/DefaultLogger')
+endif
+
+if get_option('ENABLE_UNIT_TESTS') or get_option('ENABLE_COMPONENT_TESTS')
+  subdir('app/tests')
+  subdir('app/applications/tests')
+  subdir('app/signals-handlers/tests')
+  subdir('app/signals-handlers/handlers/tests')
+  subdir('app/signals-handlers/handlers/posix/tests')
 endif

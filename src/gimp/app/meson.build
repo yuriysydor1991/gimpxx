@@ -184,6 +184,18 @@ else
   gui_rc_file = []
 endif
 
+# The C++ entry layer of gimpxx (src/main.cpp, src/app, src/log), which
+# starts GIMP through the start-up steps of main.c. It is declared here, since
+# Meson accepts no target before the add_project_arguments() calls of the
+# GIMP tree, and linked whole into both executables, as their main() is in it.
+gimpxx_lib = static_library('gimpxx',
+  gimpxx_sources,
+  include_directories: gimpxx_includes,
+  dependencies: [ glib, gimpxx_extra_deps ],
+  cpp_args: gimpxx_extra_cpp_args,
+  override_options: [ 'cpp_std=c++17', 'warning_level=3' ],
+)
+
 if enable_console_bin
   gimpconsole_exe = executable(gimpconsole_exe_name,
     'main.c',
@@ -195,12 +207,13 @@ if enable_console_bin
       app_libgimps,
       console_libapps
     ],
+    link_whole: gimpxx_lib,
     include_directories: [
       rootInclude,
       rootAppInclude,
     ],
     win_subsystem: 'console',
-    link_args: link_args,
+    link_args: [ link_args, gimpxx_extra_link_args ],
     install: true,
   )
 endif
@@ -214,6 +227,8 @@ gimpmain_exe = executable(gimpmain_exe_name,
     app_libgimps,
     gui_libapps,
   ],
+  link_whole: gimpxx_lib,
+  link_args: gimpxx_extra_link_args,
   win_subsystem: 'windows',
   install: true,
 )

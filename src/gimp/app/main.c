@@ -73,6 +73,7 @@
 #include "about.h"
 #include "app.h"
 #include "language.h"
+#include "main.h"
 #include "sanity.h"
 #include "signals.h"
 #include "unique.h"
@@ -121,27 +122,33 @@ static void      gimp_attach_console_window     (void);
 #define gimp_attach_console_window() /* as nothing */
 #endif
 
+/* The options the start-up of the C++ application layer decides on. */
+static GimpMainOptions main_options =
+{
+#ifdef GIMP_CONSOLE_COMPILATION
+  /* The console binary never initializes the graphical user interface. */
+  .no_interface = TRUE,
+#else
+  .no_interface = FALSE,
+#endif
+};
+
 static const gchar        *system_gimprc     = NULL;
 static const gchar        *user_gimprc       = NULL;
 static const gchar        *session_name      = NULL;
 static const gchar        *batch_interpreter = NULL;
-static const gchar       **batch_commands    = NULL;
 static const gchar       **filenames         = NULL;
 static gboolean            quit              = FALSE;
 static gboolean            as_new            = FALSE;
-static gboolean            no_interface      = FALSE;
 static gboolean            no_data           = FALSE;
 static gboolean            no_fonts          = FALSE;
 static gboolean            no_splash         = FALSE;
-static gboolean            be_verbose        = FALSE;
-static gboolean            new_instance      = FALSE;
 #if defined (USE_SYSV_SHM) || defined (USE_POSIX_SHM) || defined (G_OS_WIN32)
 static gboolean            use_shm           = TRUE;
 #else
 static gboolean            use_shm           = FALSE;
 #endif
 static gboolean            use_cpu_accel     = TRUE;
-static gboolean            console_messages  = FALSE;
 static gboolean            use_debug_handler = FALSE;
 
 #if defined (GIMP_UNSTABLE) || ! defined (GIMP_RELEASE)
@@ -170,12 +177,12 @@ static const GOptionEntry main_entries[] =
   },
   {
     "verbose", 0, 0,
-    G_OPTION_ARG_NONE, &be_verbose,
+    G_OPTION_ARG_NONE, &main_options.be_verbose,
     N_("Be more verbose"), NULL
   },
   {
     "new-instance", 'n', 0,
-    G_OPTION_ARG_NONE, &new_instance,
+    G_OPTION_ARG_NONE, &main_options.new_instance,
     N_("Start a new GIMP instance"), NULL
   },
   {
@@ -198,7 +205,7 @@ static const GOptionEntry main_entries[] =
 #else
     0,
 #endif
-    G_OPTION_ARG_NONE, &no_interface,
+    G_OPTION_ARG_NONE, &main_options.no_interface,
     N_("Run without a user interface"), NULL
   },
   {
@@ -243,7 +250,7 @@ static const GOptionEntry main_entries[] =
   },
   {
     "batch", 'b', 0,
-    G_OPTION_ARG_STRING_ARRAY, &batch_commands,
+    G_OPTION_ARG_STRING_ARRAY, &main_options.batch_commands,
     N_("Batch command to run (can be used multiple times)"), "<command>"
   },
   {
@@ -258,7 +265,7 @@ static const GOptionEntry main_entries[] =
   },
   {
     "console-messages", 'c', 0,
-    G_OPTION_ARG_NONE, &console_messages,
+    G_OPTION_ARG_NONE, &main_options.console_messages,
     N_("Send messages to console instead of using a dialog"), NULL
   },
   {
@@ -543,7 +550,7 @@ gimp_early_configuration (void)
    */
   earlyrc = gimp_early_rc_new (system_gimprc_file,
                                user_gimprc_file,
-                               be_verbose);
+                               main_options.be_verbose);
 
   /* Language needs to be determined first, before any GimpContext is
    * instantiated (which happens when the Gimp object is created)
@@ -606,27 +613,16 @@ gimp_options_group_parse_hook (GOptionContext   *context,
   return TRUE;
 }
 
-int
-main (int    argc,
-      char **argv)
+GimpMainOptions *
+gimp_main_options (void)
 {
-  GOptionContext *context;
-  const gchar    *abort_message;
-  GFile          *system_gimprc_file = NULL;
-  GFile          *user_gimprc_file   = NULL;
-  GOptionGroup   *gimp_group         = NULL;
-  gchar          *backtrace_file     = NULL;
-  GError         *error              = NULL;
-#ifdef G_OS_WIN32
-  gchar          *utf8_name;
-  wchar_t        *name;
-#endif
-  gint            retval;
-  gint            i;
-#if defined(ENABLE_RELOCATABLE_RESOURCES) && defined(__APPLE__)
-  gint            newargc;
-#endif
+  return &main_options;
+}
 
+void
+gimp_main_init_platform (gint    *argc,
+                         gchar ***argv)
+{
 #if defined(ENABLE_RELOCATABLE_RESOURCES) && defined(_WIN32)
   /* keep this always on top to ensure it is called before Glib initialization */
   gimp_windows_setenv ();
@@ -638,25 +634,28 @@ main (int    argc,
 
 #if defined(__APPLE__)
 #if defined(ENABLE_RELOCATABLE_RESOURCES)
-  /* remove MacOS session identifier from the command line args */
-  newargc = 0;
-  for (gint i = 0; i < argc; i++)
-    {
-      if (!g_str_has_prefix (argv[i], "-psn_"))
-        {
-          argv[newargc] = argv[i];
-          newargc++;
-        }
-    }
+  {
+    /* remove MacOS session identifier from the command line args */
+    gint newargc = 0;
 
-  if (argc > newargc)
-    {
-      argv[newargc] = NULL; /* glib expects NULL terminated array */
-      argc = newargc;
-    }
+    for (gint i = 0; i < *argc; i++)
+      {
+        if (!g_str_has_prefix ((*argv)[i], "-psn_"))
+          {
+            (*argv)[newargc] = (*argv)[i];
+            newargc++;
+          }
+      }
+
+    if (*argc > newargc)
+      {
+        (*argv)[newargc] = NULL; /* glib expects NULL terminated array */
+        *argc = newargc;
+      }
+  }
 #endif
 
-  gimp_macos_setenv (argv[0]);
+  gimp_macos_setenv ((*argv)[0]);
 #endif
 
 #if defined (__GNUC__) && defined (_WIN64)
@@ -665,9 +664,15 @@ main (int    argc,
    * bogus argc and argv. __argc and __argv are OK, though, so just
    * use them.
    */
-  argc = __argc;
-  argv = __argv;
+  *argc = __argc;
+  *argv = __argv;
 #endif
+}
+
+gchar *
+gimp_main_init_signals (void)
+{
+  gchar *backtrace_file = NULL;
 
   /* Initialize GimpBacktrace early on.  In particular, we want the
    * Windows backend to catch the SET_THREAD_NAME exceptions of newly
@@ -678,7 +683,16 @@ main (int    argc,
   /* Start signal handlers early. */
   gimp_init_signal_handlers (&backtrace_file);
 
+  return backtrace_file;
+}
+
+gchar **
+gimp_main_init_process (gchar **argv)
+{
 #ifdef G_OS_WIN32
+  gchar   *utf8_name;
+  wchar_t *name;
+
   /* Make Inno aware of gimp process avoiding broken install/unninstall */
   utf8_name = g_strdup_printf ("GIMP-%s", GIMP_MUTEX_VERSION);
   name      = g_utf8_to_utf16 (utf8_name, -1, NULL, NULL, NULL);
@@ -785,49 +799,26 @@ main (int    argc,
 
   g_set_prgname (GIMP_DESKTOP_NAME);
 
-  /* Check argv[] for "--verbose" first */
-  for (i = 1; i < argc; i++)
-    {
-      const gchar *arg = argv[i];
+  return argv;
+}
 
-      if (arg[0] != '-')
-        continue;
+void
+gimp_main_attach_console (void)
+{
+  gimp_attach_console_window ();
+}
 
-      if ((strcmp (arg, "--verbose") == 0) || (strcmp (arg, "-v") == 0))
-        {
-          be_verbose = TRUE;
-        }
-    }
+void
+gimp_main_show_version (void)
+{
+  gimp_version_show (main_options.be_verbose);
+}
 
-  /* Check argv[] for "--no-interface" before trying to initialize gtk+. */
-  for (i = 1; i < argc; i++)
-    {
-      const gchar *arg = argv[i];
-
-      if (arg[0] != '-')
-        continue;
-
-      if ((strcmp (arg, "--no-interface") == 0) || (strcmp (arg, "-i") == 0))
-        {
-          no_interface = TRUE;
-        }
-      else if ((strcmp (arg, "--version") == 0) || (strcmp (arg, "-v") == 0))
-        {
-          gimp_show_version_and_exit ();
-        }
-#if defined (G_OS_WIN32) && !defined (GIMP_CONSOLE_COMPILATION)
-      else if ((strcmp (arg, "--help") == 0) ||
-               (strcmp (arg, "-?") == 0) ||
-               (strncmp (arg, "--help-", 7) == 0))
-        {
-          gimp_attach_console_window ();
-        }
-#endif
-    }
-
-#ifdef GIMP_CONSOLE_COMPILATION
-  no_interface = TRUE;
-#endif
+GOptionContext *
+gimp_main_option_context_new (void)
+{
+  GOptionContext *context;
+  GOptionGroup   *gimp_group;
 
   context = g_option_context_new (_("[FILE|URI...]"));
   g_option_context_set_summary (context, GIMP_NAME);
@@ -846,35 +837,40 @@ main (int    argc,
                                   gimp_options_group_parse_hook);
   g_option_context_add_group (context, gimp_group);
 
-  app_libs_init (context, no_interface);
+  app_libs_init (context, main_options.no_interface);
 
-  if (! g_option_context_parse_strv (context, &argv, &error))
+  return context;
+}
+
+void
+gimp_main_report_parse_error (GError *error)
+{
+  if (error)
     {
-      if (error)
-        {
-          gimp_attach_console_window ();
-          g_print ("%s\n", error->message);
-          g_error_free (error);
-        }
-      else
-        {
-          g_print ("%s\n",
-                   _("GIMP could not initialize the graphical user interface.\n"
-                     "Make sure a proper setup for your display environment "
-                     "exists."));
-        }
-
-      app_exit (EXIT_FAILURE);
+      gimp_attach_console_window ();
+      g_print ("%s\n", error->message);
+      g_error_free (error);
     }
+  else
+    {
+      g_print ("%s\n",
+               _("GIMP could not initialize the graphical user interface.\n"
+                 "Make sure a proper setup for your display environment "
+                 "exists."));
+    }
+}
 
+gboolean
+gimp_main_set_flatpak_prgname (void)
+{
 #if GLIB_CHECK_VERSION(2,72,0)
   /* g_set_prgname() can only be called several times since 2.72.0. */
 #ifndef GIMP_CONSOLE_COMPILATION
-  if (! no_interface)
+  if (! main_options.no_interface)
     {
       GKeyFile *flatpak_keyfile;
 
-      g_return_val_if_fail (gdk_display_get_default () != NULL, EXIT_FAILURE);
+      g_return_val_if_fail (gdk_display_get_default () != NULL, FALSE);
 
       flatpak_keyfile = g_key_file_new ();
 
@@ -915,70 +911,84 @@ main (int    argc,
 #endif
 #endif
 
-  if (no_interface || be_verbose || console_messages || batch_commands != NULL)
-    gimp_attach_console_window ();
+  return TRUE;
+}
 
-  if (no_interface)
-    new_instance = TRUE;
-
+gboolean
+gimp_main_run_remote (gint *exit_status)
+{
 #ifndef GIMP_CONSOLE_COMPILATION
-  if (! new_instance)
-    {
-      gboolean is_running = FALSE;
+  gboolean is_running = FALSE;
 
 #ifndef G_OS_WIN32
-      is_running = gimp_unique_open (filenames, as_new);
+  is_running = gimp_unique_open (filenames, as_new);
 #else
-      /* Windows Explorer spawns separate processes when multiple files are selected
-         (except for the MSIX, where the it passes each filename as on Unix: 55c97120).
-         The only realiable way to them communicate is a mutex early on main.c. See: #364 */
-      HANDLE primary_instance = CreateMutexW (NULL, FALSE, L"Local\\gimp_primary_instance_running");
-      DWORD  primary_instance_error = primary_instance ? GetLastError () : 0;
+  /* Windows Explorer spawns separate processes when multiple files are selected
+     (except for the MSIX, where the it passes each filename as on Unix: 55c97120).
+     The only realiable way to them communicate is a mutex early on main.c. See: #364 */
+  HANDLE primary_instance = CreateMutexW (NULL, FALSE, L"Local\\gimp_primary_instance_running");
+  DWORD  primary_instance_error = primary_instance ? GetLastError () : 0;
 
-      if (primary_instance && primary_instance_error == ERROR_ALREADY_EXISTS)
+  if (primary_instance && primary_instance_error == ERROR_ALREADY_EXISTS)
+    {
+      /* another GIMP instance is already running */
+      for (gint retry = 0; retry < 20; retry++)
         {
-          /* another GIMP instance is already running */
-          for (gint retry = 0; retry < 20; retry++)
-            {
-              is_running = gimp_unique_open (filenames, as_new);
+          is_running = gimp_unique_open (filenames, as_new);
 
-              if (is_running)
-                break;
+          if (is_running)
+            break;
 
-              g_usleep (100000);
-            }
-
-          CloseHandle (primary_instance);
+          g_usleep (100000);
         }
-      else
-        {
-          /* this is the primary GIMP instance */
-          is_running = FALSE;
-        }
-#endif
 
-      if (is_running)
-        {
-          int success = EXIT_SUCCESS;
-
-          if (be_verbose)
-            g_print ("%s\n",
-                     _("Another GIMP instance is already running."));
-
-          if (batch_commands &&
-              ! gimp_unique_batch_run (batch_interpreter, batch_commands))
-            success = EXIT_FAILURE;
-
-          gdk_notify_startup_complete ();
-
-          return success;
-        }
+      CloseHandle (primary_instance);
+    }
+  else
+    {
+      /* this is the primary GIMP instance */
+      is_running = FALSE;
     }
 #endif
 
-  abort_message = sanity_check_early ();
+  if (is_running)
+    {
+      *exit_status = EXIT_SUCCESS;
+
+      if (main_options.be_verbose)
+        g_print ("%s\n",
+                 _("Another GIMP instance is already running."));
+
+      if (main_options.batch_commands &&
+          ! gimp_unique_batch_run (batch_interpreter,
+                                   main_options.batch_commands))
+        *exit_status = EXIT_FAILURE;
+
+      gdk_notify_startup_complete ();
+    }
+
+  return is_running;
+#else
+  return FALSE;
+#endif
+}
+
+void
+gimp_main_check_sanity (void)
+{
+  const gchar *abort_message = sanity_check_early ();
+
   if (abort_message)
-    app_abort (no_interface, abort_message);
+    app_abort (main_options.no_interface, abort_message);
+}
+
+gint
+gimp_main_run (const gchar *full_prog_name,
+               const gchar *backtrace_file)
+{
+  GFile *system_gimprc_file = NULL;
+  GFile *user_gimprc_file   = NULL;
+  gint   retval;
 
   if (system_gimprc)
     system_gimprc_file = g_file_new_for_commandline_arg (system_gimprc);
@@ -986,23 +996,23 @@ main (int    argc,
   if (user_gimprc)
     user_gimprc_file = g_file_new_for_commandline_arg (user_gimprc);
 
-  retval = app_run (argv[0],
+  retval = app_run (full_prog_name,
                     filenames,
                     system_gimprc_file,
                     user_gimprc_file,
                     session_name,
                     batch_interpreter,
-                    batch_commands,
+                    main_options.batch_commands,
                     quit,
                     as_new,
-                    no_interface,
+                    main_options.no_interface,
                     no_data,
                     no_fonts,
                     no_splash,
-                    be_verbose,
+                    main_options.be_verbose,
                     use_shm,
                     use_cpu_accel,
-                    console_messages,
+                    main_options.console_messages,
                     use_debug_handler,
                     show_playground,
                     show_debug_menu,
@@ -1012,18 +1022,11 @@ main (int    argc,
 
   gimp_env_exit (FALSE);
 
-  g_free (backtrace_file);
-
   g_clear_object (&system_gimprc_file);
   g_clear_object (&user_gimprc_file);
 
-  g_strfreev (argv);
-
-  g_option_context_free (context);
-
   return retval;
 }
-
 
 #ifdef G_OS_WIN32
 
@@ -1032,6 +1035,10 @@ main (int    argc,
  * execution still starts in main() in that case. So WinMain() gets
  * used on MSVC builds only.
  */
+
+/* The C++ main() of gimpxx (src/main.cpp). */
+int main (int    argc,
+          char **argv);
 
 int WINAPI
 WinMain (HINSTANCE hInstance,
@@ -1231,7 +1238,7 @@ static void
 gimp_show_version_and_exit (void)
 {
   gimp_attach_console_window ();
-  gimp_version_show (be_verbose);
+  gimp_version_show (main_options.be_verbose);
 
   app_exit (EXIT_SUCCESS);
 }
@@ -1240,7 +1247,7 @@ static void
 gimp_show_license_and_exit (void)
 {
   gimp_attach_console_window ();
-  gimp_version_show (be_verbose);
+  gimp_version_show (main_options.be_verbose);
 
   g_print ("\n%s\n\n", GIMP_LICENSE);
 
