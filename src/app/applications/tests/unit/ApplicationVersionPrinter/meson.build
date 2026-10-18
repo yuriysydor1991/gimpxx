@@ -20,5 +20,5 @@ UTEST_ApplicationVersionPrinter = executable(
 test(
   'gtest', 
   UTEST_ApplicationVersionPrinter,
-  suite: ['gimpxx', 'UTEST_ApplicationVersionPrinter']
+  suite: ['gimpxx-cpp', 'UTEST_ApplicationVersionPrinter']
 )

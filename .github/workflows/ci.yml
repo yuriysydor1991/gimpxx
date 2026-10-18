@@ -64,10 +64,10 @@ jobs:
       - name: cppcheck
         if: ${{ inputs.run_cppcheck }}
         run: meson compile -C "$BUILDDIR" cppcheck
-      # The gimpxx suite holds the unit and the component tests of the C++
+      # The gimpxx-cpp suite holds the unit and the component tests of the C++
       # code; the original GIMP tests need a display.
       - name: Unit & Component Tests
-        run: meson test -C "$BUILDDIR" --no-rebuild --print-errorlogs --suite gimpxx
+        run: meson test -C "$BUILDDIR" --no-rebuild --print-errorlogs --suite gimpxx-cpp
       - name: Upload JUnit test results
         if: always()
         uses: actions/upload-artifact@v7

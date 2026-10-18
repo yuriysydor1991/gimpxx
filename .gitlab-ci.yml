@@ -65,9 +65,9 @@ build-and-test:
         -DMAX_LOG_LEVEL=5 -DENABLE_COMPONENT_TESTS=true
     - meson compile -C "$BUILDDIR"
     - if [ "$RUN_CPPCHECK" = "true" ]; then meson compile -C "$BUILDDIR" cppcheck; fi
-    # The gimpxx suite holds the unit and the component tests of the C++
+    # The gimpxx-cpp suite holds the unit and the component tests of the C++
     # code; the original GIMP tests need a display.
-    - meson test -C "$BUILDDIR" --no-rebuild --print-errorlogs --suite gimpxx
+    - meson test -C "$BUILDDIR" --no-rebuild --print-errorlogs --suite gimpxx-cpp
   artifacts:
     when: always
     reports:

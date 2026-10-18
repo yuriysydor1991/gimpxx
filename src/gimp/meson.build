@@ -7,6 +7,11 @@
 gimp_source_root = meson.current_source_dir()
 gimp_build_root  = meson.current_build_dir()
 
+# The package name of the install and the configuration directories. It stays
+# the GIMP one, unlike the gimpxx project name, so gimpxx shares the plug-ins,
+# the data and the settings of GIMP.
+gimp_package_name = 'gimp'
+
 project_url = 'https://gitlab.gnome.org/GNOME/gimp'
 project_url_issues = 'https://www.gimp.org/bugs/' #see Infrastructure/gimp-web@d6d0559d
 
@@ -1678,8 +1683,8 @@ conf.set_quoted('CC_VERSION',     cc_version.strip())
 conf.set_quoted('PYTHON_VERSION', python.language_version())
 
 # Names
-conf.set_quoted('GIMP_PACKAGE',   meson.project_name())
-conf.set_quoted('PACKAGE_NAME',   meson.project_name())
+conf.set_quoted('GIMP_PACKAGE',   gimp_package_name)
+conf.set_quoted('PACKAGE_NAME',   gimp_package_name)
 conf.set_quoted('PACKAGE_STRING', package_string)
 conf.set_quoted('GIMP_COMMAND',   gimp_command)
 conf.set_quoted('GIMP_DESKTOP_NAME', gimp_desktop_name)
@@ -1701,10 +1706,10 @@ conf.set_quoted('GIMP_PKGCONFIG_VERSION', gimp_api_version)
 gimpdir = get_option('gimpdir')
 if gimpdir == ''
   # Default value
-  gimpdir = meson.project_name().to_upper()
+  gimpdir = gimp_package_name.to_upper()
 endif
 
-project_subdir = meson.project_name() / gimp_api_version
+project_subdir = gimp_package_name / gimp_api_version
 gimpdatadir    = get_option('datadir')    / project_subdir
 gimpplugindir  = get_option('libdir')     / project_subdir
 gimpsysconfdir = get_option('sysconfdir') / project_subdir

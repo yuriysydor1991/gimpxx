@@ -1,4 +1,4 @@
-project('gimp',
+project('gimpxx',
   'c', 'cpp',
   version: '3.2.6',
   meson_version: '>=0.61.2',

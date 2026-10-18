@@ -21,5 +21,5 @@ UTEST_ReloadSignalsHandler = executable(
 test(
   'gtest',
   UTEST_ReloadSignalsHandler,
-  suite: ['gimpxx', 'UTEST_ReloadSignalsHandler']
+  suite: ['gimpxx-cpp', 'UTEST_ReloadSignalsHandler']
 )

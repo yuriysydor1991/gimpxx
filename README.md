@@ -49,7 +49,7 @@ meson compile -C build
 ./build/src/gimp/app/gimp-console-3.2 --version
 ```
 
-The C++ unit and component tests are enabled with the `-DENABLE_UNIT_TESTS=true -DENABLE_COMPONENT_TESTS=true` options and run with the `meson test -C build --suite gimpxx`.
+The C++ unit and component tests are enabled with the `-DENABLE_UNIT_TESTS=true -DENABLE_COMPONENT_TESTS=true` options and run with the `meson test -C build --suite gimpxx-cpp`.
 
 # Documentation contents
 

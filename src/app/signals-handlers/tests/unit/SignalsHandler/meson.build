@@ -25,5 +25,5 @@ UTEST_SignalsHandler = executable(
 test(
   'gtest',
   UTEST_SignalsHandler,
-  suite: ['gimpxx', 'UTEST_SignalsHandler']
+  suite: ['gimpxx-cpp', 'UTEST_SignalsHandler']
 )

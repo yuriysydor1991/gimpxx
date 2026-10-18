@@ -21,5 +21,5 @@ UTEST_IgnoredSignalsHandler = executable(
 test(
   'gtest',
   UTEST_IgnoredSignalsHandler,
-  suite: ['gimpxx', 'UTEST_IgnoredSignalsHandler']
+  suite: ['gimpxx-cpp', 'UTEST_IgnoredSignalsHandler']
 )

@@ -24,5 +24,5 @@ UTEST_ApplicationFactory = executable(
 test(
   'gtest', 
   UTEST_ApplicationFactory,
-  suite: ['gimpxx', 'UTEST_ApplicationFactory']
+  suite: ['gimpxx-cpp', 'UTEST_ApplicationFactory']
 )

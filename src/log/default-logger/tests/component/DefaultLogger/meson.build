@@ -22,5 +22,5 @@ CTEST_DefaultLogger = executable(
 test(
   'gtest',
   CTEST_DefaultLogger,
-  suite: ['gimpxx', 'CTEST_DefaultLogger'],
+  suite: ['gimpxx-cpp', 'CTEST_DefaultLogger'],
 )

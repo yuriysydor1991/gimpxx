@@ -16,5 +16,5 @@ UTEST_ApplicationContext = executable(
 test(
   'gtest', 
   UTEST_ApplicationContext,
-  suite: ['gimpxx', 'UTEST_ApplicationContext']
+  suite: ['gimpxx-cpp', 'UTEST_ApplicationContext']
 )

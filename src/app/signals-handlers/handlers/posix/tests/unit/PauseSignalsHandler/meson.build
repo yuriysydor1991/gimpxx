@@ -21,5 +21,5 @@ UTEST_PauseSignalsHandler = executable(
 test(
   'gtest',
   UTEST_PauseSignalsHandler,
-  suite: ['gimpxx', 'UTEST_PauseSignalsHandler']
+  suite: ['gimpxx-cpp', 'UTEST_PauseSignalsHandler']
 )

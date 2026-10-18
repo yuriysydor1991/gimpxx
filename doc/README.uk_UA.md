@@ -47,7 +47,7 @@ meson compile -C build
 ./build/src/gimp/app/gimp-console-3.2 --version
 ```
 
-Модульні та компонентні C++ тести вмикаються опціями `-DENABLE_UNIT_TESTS=true -DENABLE_COMPONENT_TESTS=true` і запускаються командою `meson test -C build --suite gimpxx`.
+Модульні та компонентні C++ тести вмикаються опціями `-DENABLE_UNIT_TESTS=true -DENABLE_COMPONENT_TESTS=true` і запускаються командою `meson test -C build --suite gimpxx-cpp`.
 
 # Зміст документації
 

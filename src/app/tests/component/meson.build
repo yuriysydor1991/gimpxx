@@ -33,5 +33,5 @@ CTEST_app = executable(
 test(
   'gtest',
   CTEST_app,
-  suite: ['gimpxx', 'CTEST_app']
+  suite: ['gimpxx-cpp', 'CTEST_app']
 )

@@ -21,5 +21,5 @@ CTEST_log = executable(
 test(
   'gtest',
   CTEST_log,
-  suite: ['gimpxx', 'CTEST_log'],
+  suite: ['gimpxx-cpp', 'CTEST_log'],
 )

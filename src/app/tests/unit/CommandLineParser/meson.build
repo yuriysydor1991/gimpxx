@@ -20,5 +20,5 @@ UTEST_CommandLineParser = executable(
 test(
   'gtest', 
   UTEST_CommandLineParser,
-  suite: ['gimpxx', 'UTEST_CommandLineParser']
+  suite: ['gimpxx-cpp', 'UTEST_CommandLineParser']
 )
