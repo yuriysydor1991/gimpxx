@@ -30003,6 +30003,32 @@ msgctxt "edit-action"
 msgid "Undo History Menu"
 msgstr "Меню журналу скасувань"
 
+#: app/about.h:28
+msgid "GIMPxx, based on GIMP"
+msgstr "GIMPxx, заснована на GIMP"
+
+#: app/about.h:31
+msgid "Based on GIMP, the GNU Image Manipulation Program"
+msgstr "Заснована на GIMP, GNU Image Manipulation Program"
+
+#: app/dialogs/about-dialog.c:260
+msgid "About GIMPxx"
+msgstr "Про програму GIMPxx"
+
+#: app/dialogs/welcome-dialog.c:206
+#, c-format
+msgid "Welcome to GIMPxx, based on GIMP %s"
+msgstr "Вітаємо у GIMPxx, заснованій на GIMP %s"
+
+#: app/dialogs/welcome-dialog.c:499
+#, c-format
+msgid "You installed GIMPxx, based on GIMP %s!"
+msgstr "Вами встановлено GIMPxx, засновану на GIMP %s!"
+
+#: app/gui/splash.c:207
+msgid "GIMPxx Startup"
+msgstr "Запуск GIMPxx"
+
 #~ msgid "Wheel/Rotation"
 #~ msgstr "Коліщатко/Обертання"
 

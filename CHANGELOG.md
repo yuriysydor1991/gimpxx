@@ -15,3 +15,5 @@ Based on the `GIMP_3_2_6` release of GIMP.
 - Grafting the cpp-app-template appMeson infrastructure
 - Starting GIMP from the template C++ application classes
 - Documenting the gimpxx layout and start-up
+- Renaming the project into gimpxx
+- Naming GIMPxx, based on GIMP, in the user interface

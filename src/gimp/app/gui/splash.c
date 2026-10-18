@@ -43,6 +43,7 @@
 
 #include "widgets/gimpwidgets-utils.h"
 
+#include "about.h"
 #include "gimpapp.h"
 #include "splash.h"
 
@@ -67,6 +68,9 @@ typedef struct
   PangoLayout    *lower;
   gint            lower_x;
   gint            lower_y;
+  PangoLayout    *label;
+  gint            label_x;
+  gint            label_y;
 
   gdouble         percentage;
   gchar          *text1;
@@ -200,7 +204,7 @@ splash_create (Gimp         *gimp,
     g_object_new (GTK_TYPE_APPLICATION_WINDOW,
                   "type",            GTK_WINDOW_TOPLEVEL,
                   "type-hint",       GDK_WINDOW_TYPE_HINT_SPLASHSCREEN,
-                  "title",           _("GIMP Startup"),
+                  "title",           _("GIMPxx Startup"),
                   "role",            "gimp-startup",
                   "window-position", GTK_WIN_POS_CENTER,
                   "resizable",       FALSE,
@@ -286,6 +290,21 @@ splash_create (Gimp         *gimp,
   else
     gimp_pango_layout_set_scale (splash->lower, PANGO_SCALE_X_SMALL);
 
+  /*  the gimpxx label, in the bottom right corner  */
+  splash->label = gtk_widget_create_pango_layout (splash->area, GIMP_NAME);
+  pango_layout_get_pixel_extents (splash->label, &ink, NULL);
+
+  if (splash->width > 6 * ink.width)
+    gimp_pango_layout_set_scale (splash->label, PANGO_SCALE_X_LARGE);
+  else if (splash->width > 4 * ink.width)
+    gimp_pango_layout_set_scale (splash->label, PANGO_SCALE_LARGE);
+  else
+    gimp_pango_layout_set_scale (splash->label, PANGO_SCALE_MEDIUM);
+
+  pango_layout_get_pixel_extents (splash->label, &ink, NULL);
+  splash->label_x = splash->width  - ink.x - ink.width  - splash->height / 40;
+  splash->label_y = splash->height - ink.y - ink.height - splash->height / 40;
+
   /*  this sets the initial layout positions  */
   splash_position_layouts (splash, "", "", NULL);
 
@@ -337,6 +356,7 @@ splash_destroy (void)
 
   g_object_unref (splash->upper);
   g_object_unref (splash->lower);
+  g_object_unref (splash->label);
 
   g_free (splash->text1);
   g_free (splash->text2);
@@ -422,6 +442,15 @@ splash_area_draw (GtkWidget  *widget,
                   cairo_t    *cr,
                   GimpSplash *splash)
 {
+  /*  white over a shadow, so the label reads on any splash image  */
+  cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 0.6);
+  cairo_move_to (cr, splash->label_x + 1, splash->label_y + 1);
+  pango_cairo_show_layout (cr, splash->label);
+
+  cairo_set_source_rgb (cr, 1.0, 1.0, 1.0);
+  cairo_move_to (cr, splash->label_x, splash->label_y);
+  pango_cairo_show_layout (cr, splash->label);
+
   gdk_cairo_set_source_rgba (cr, &splash->color);
 
   cairo_move_to (cr, splash->upper_x, splash->upper_y);

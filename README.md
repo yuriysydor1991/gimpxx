@@ -21,6 +21,12 @@ The very same text is also available in Ukrainian under [doc/README.uk_UA.md](/d
 
 The `gimp-data` link of the root points to `src/gimp/gimp-data`, since the gimp-data build files address their images relative to the top-level project.
 
+# Names
+
+The Meson project is `gimpxx`. The user interface names it **GIMPxx, based on GIMP**: the splash screen, the window titles, the welcome and the about dialogs, the desktop entry and the `--version` and `--help` output.
+
+The executables (`gimp-3.2`, `gimp-console-3.2`), the install and the configuration directories (`share/gimp/3.0`, `~/.config/GIMP/3.2`) and the application ID (`org.gimp.GIMP`) stay the GIMP ones, so gimpxx shares the plug-ins, the data and the settings of GIMP.
+
 # The start-up of GIMP
 
 The [`src/main.cpp`](/src/main.cpp) calls the `app::ApplicationFactory::execute`. The factory runs the start-up steps of the former `main()` of GIMP in their original order, through the C functions of [`src/gimp/app/main.h`](/src/gimp/app/main.h):

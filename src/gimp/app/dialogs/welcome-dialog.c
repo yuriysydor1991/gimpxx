@@ -203,7 +203,8 @@ welcome_dialog_new (Gimp       *gimp,
   gchar         **accels;
 
   /* Translators: the %s string will be the version, e.g. "3.0". */
-  title = g_strdup_printf (_("Welcome to GIMP %s"), GIMP_VERSION);
+  title = g_strdup_printf (_("Welcome to GIMPxx, based on GIMP %s"),
+                           GIMP_VERSION);
   windows = gimp_get_image_windows (gimp);
   dialog = gimp_dialog_new (title,
                             "gimp-welcome-dialog",
@@ -495,7 +496,8 @@ welcome_dialog_create_welcome_page (Gimp      *gimp,
   gtk_widget_set_visible (grid, TRUE);
 
   /* Translators: the %s string will be the version, e.g. "3.0". */
-  tmp = g_strdup_printf (_("You installed GIMP %s!"), GIMP_VERSION);
+  tmp = g_strdup_printf (_("You installed GIMPxx, based on GIMP %s!"),
+                         GIMP_VERSION);
   widget = gtk_label_new (NULL);
   /* XXX For GTK4, we may just replace with gtk_widget_add_css_class() AFAICS. */
   gtk_style_context_add_class (gtk_widget_get_style_context (widget), "title-3");

@@ -18,11 +18,17 @@
 #pragma once
 
 
+/* gimpxx, the C++ port of GIMP, names itself in the user interface,
+ * together with GIMP, which it is based on.
+ */
 #define GIMP_ACRONYM \
-  _("GIMP")
+  "GIMPxx"
 
 #define GIMP_NAME \
-  _("GNU Image Manipulation Program")
+  _("GIMPxx, based on GIMP")
+
+#define GIMP_ORIGIN \
+  _("Based on GIMP, the GNU Image Manipulation Program")
 
 /* The year of the last commit (UTC) will be inserted into this string. */
 #define GIMP_COPYRIGHT \

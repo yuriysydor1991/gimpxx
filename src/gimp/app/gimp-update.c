@@ -553,7 +553,7 @@ gimp_update_auto_check (GimpCoreConfig *config,
         return FALSE;
 #else
       g_log (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
-             "Welcome to GIMP %s!", GIMP_VERSION);
+             "Welcome to GIMPxx, based on GIMP %s!", GIMP_VERSION);
 #endif
     }
 
