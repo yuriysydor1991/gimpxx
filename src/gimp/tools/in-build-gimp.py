@@ -142,15 +142,21 @@ try:
         os.symlink(os.environ.get("GIMP_PYTHON_WITH_GI"), tmp_symlink)
       os.environ["PATH"] = tmp_path + os.pathsep + os.environ.get("PATH", "")
 
+  # The gimp-data scripts write their output relative to the GIMP tree build
+  # root, which is a subdirectory of the gimpxx build directory. So GIMP runs
+  # from there, with the path arguments made absolute first.
+  args = [os.path.abspath(arg) if os.path.exists(arg) else arg for arg in sys.argv[1:]]
+  os.chdir(GIMP_GLOBAL_BUILD_ROOT)
+
   # Finally, run gimp!
   gimp_self = os.path.relpath(os.environ.get("GIMP_SELF_IN_BUILD"))
   gimp_debug_self = os.environ.get("GIMP_DEBUG_SELF_WRAPPER")
   if gimp_debug_self and "gdb" in gimp_debug_self and shutil.which("gdb"):
-    cmd = [gimp_debug_self,"--return-child-result","--batch","-x",f"{os.path.relpath(os.environ['GIMP_GLOBAL_SOURCE_ROOT'])}/tools/debug-in-build-gimp.py","--args", gimp_self] + sys.argv[1:]
+    cmd = [gimp_debug_self,"--return-child-result","--batch","-x",f"{os.path.relpath(os.environ['GIMP_GLOBAL_SOURCE_ROOT'])}/tools/debug-in-build-gimp.py","--args", gimp_self] + args
   elif gimp_debug_self and "lldb" in gimp_debug_self and shutil.which("lldb"):
-    cmd = [gimp_debug_self, "--batch", "-o", f"target create {gimp_self}", "-o", f"settings set -- target.run-args {' '.join(sys.argv[1:])}", "-o", f"script import importlib.util; spec = importlib.util.spec_from_file_location('debug_in_build_gimp', '{os.path.relpath(Path(os.environ['GIMP_GLOBAL_SOURCE_ROOT']))}/tools/debug-in-build-gimp.py'); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)"]
+    cmd = [gimp_debug_self, "--batch", "-o", f"target create {gimp_self}", "-o", f"settings set -- target.run-args {' '.join(args)}", "-o", f"script import importlib.util; spec = importlib.util.spec_from_file_location('debug_in_build_gimp', '{os.path.relpath(Path(os.environ['GIMP_GLOBAL_SOURCE_ROOT']))}/tools/debug-in-build-gimp.py'); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)"]
   else:
-    cmd = [gimp_self] + sys.argv[1:]
+    cmd = [gimp_self] + args
   sys.stderr.write(f"RUNNING: {shlex.join(cmd)}\n")
   subprocess.run(cmd, stdin=sys.stdin, check=True)
 
