@@ -1,0 +1,5 @@
+MOCK_GIMPController = include_directories('GIMPController')
+MOCK_LinuxGIMPController = include_directories('LinuxGIMPController')
+MOCK_MacOSGIMPController = include_directories('MacOSGIMPController')
+MOCK_WindowsGIMPController = include_directories('WindowsGIMPController')
+MOCK_gimp_c_includes = include_directories('gimp-c-includes')

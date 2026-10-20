@@ -8,6 +8,7 @@
 #include "src/app/ApplicationContext.h"
 
 using namespace app;
+using namespace gimp_controller;
 using namespace testing;
 
 class UTEST_ApplicationContext : public Test
@@ -20,12 +21,13 @@ class UTEST_ApplicationContext : public Test
 
   std::shared_ptr<ApplicationContext> create_context(int& gargc, char**& gargv)
   {
-    return std::make_shared<ApplicationContext>(gargc, gargv, options);
+    return std::make_shared<ApplicationContext>(gargc, gargv, gimpController);
   }
 
   int argc{0};
   char** argv{nullptr};
-  GimpMainOptions options{};
+  std::shared_ptr<GIMPController> gimpController{
+      std::make_shared<NiceMock<GIMPController>>()};
 
   std::shared_ptr<ApplicationContext> appCtx;
 };
@@ -43,7 +45,7 @@ TEST_F(UTEST_ApplicationContext, empty_context)
   EXPECT_FALSE(appCtx->get_first_user_request());
   EXPECT_FALSE(appCtx->get_second_user_request());
   EXPECT_TRUE(appCtx->get_backtrace_file().empty());
-  EXPECT_EQ(&appCtx->get_options(), &options);
+  EXPECT_EQ(&appCtx->get_gimp_controller(), gimpController.get());
 }
 
 TEST_F(UTEST_ApplicationContext, custom_argc)
@@ -100,12 +102,15 @@ TEST_F(UTEST_ApplicationContext, args_are_referenced_and_not_copied)
   EXPECT_EQ(customCtx->get_argv(), nullptr);
 }
 
-TEST_F(UTEST_ApplicationContext, options_are_referenced_and_not_copied)
+TEST_F(UTEST_ApplicationContext, the_gimp_controller_is_shared)
 {
-  appCtx->get_options().no_interface = TRUE;
+  // The context keeps the controller alive, which the option context refers
+  // to until the end of the run.
+  EXPECT_EQ(gimpController.use_count(), 2);
 
-  EXPECT_TRUE(options.no_interface);
-  EXPECT_FALSE(options.be_verbose);
+  appCtx.reset();
+
+  EXPECT_EQ(gimpController.use_count(), 1);
 }
 
 TEST_F(UTEST_ApplicationContext, adopting_the_argv_replaces_the_referenced_one)

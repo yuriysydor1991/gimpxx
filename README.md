@@ -15,6 +15,7 @@ The very same text is also available in Ukrainian under [doc/README.uk_UA.md](/d
 | [`meson.build`](/meson.build), [`meson_options.txt`](/meson_options.txt) | The root of the build. The GIMP options (lower case) come first, the template ones (upper case) follow them |
 | [`meson`](/meson) | The template Meson modules (`gimpxx-*`): hardening, sanitizers, code checks, profilers, packagers |
 | [`src/main.cpp`](/src/main.cpp), [`src/app`](/src/app), [`src/log`](/src/log) | The template C++ application layer, which starts GIMP |
+| [`src/gimp-controller`](/src/gimp-controller) | The `gimp_controller::GIMPController` and its platform classes, the former `main.c` of GIMP |
 | [`src/gimp`](/src/gimp) | The original GIMP tree with the [`gimp-data`](/src/gimp/gimp-data) submodule. Its [`README`](/src/gimp/README) is the GIMP one |
 | [`doc`](/doc) | The documentation sections, the diagrams and the Doxygen configuration |
 | [`misc`](/misc), [`scripts`](/scripts) | The code style and the code checks configurations, the packaging templates and the helper scripts |
@@ -29,15 +30,15 @@ The executables (`gimp-3.2`, `gimp-console-3.2`), the install and the configurat
 
 # The start-up of GIMP
 
-The [`src/main.cpp`](/src/main.cpp) calls the `app::ApplicationFactory::execute`. The factory runs the start-up steps of the former `main()` of GIMP in their original order, through the C functions of [`src/gimp/app/main.h`](/src/gimp/app/main.h):
+The [`src/main.cpp`](/src/main.cpp) calls the `app::ApplicationFactory::execute`. The factory creates the `gimp_controller::GIMPController` of the current platform, the former `main.c` of GIMP ([`src/gimp-controller`](/src/gimp-controller)), and runs its start-up steps in the original order of the `main()` of GIMP:
 
-1. `gimp_main_init_platform` - the Windows and the macOS environment and the console window;
-1. `GimpSignalsHandler` - the GIMP backtraces and signal handlers;
-1. `gimp_main_init_process` - the GLib and the GIMP environment, the GIMP logging, the translations and the arguments copy, which the `ApplicationContext` owns;
-1. `CommandLineParser` - the scan for the verbose, the no interface and the version options, then the GIMP option parsing;
-1. `ApplicationVersionPrinter` or `Application` - the version output, or the remote GIMP instance, the sanity check and the run of GIMP.
+1. `GIMPController::init_platform` - the command line the OS gave, the platform environment and the console window;
+1. `GimpSignalsHandler` - the GIMP backtraces and signal handlers, through the `GIMPController::init_signals`;
+1. `GIMPController::init_process` - the platform process set-up, the GLib and the GIMP environment, the GIMP logging, the translations and the arguments copy, which the `ApplicationContext` owns;
+1. `CommandLineParser` - the scan for the verbose, the no interface and the version options, then the parsing of the GIMP options the controller owns;
+1. `ApplicationVersionPrinter` or `Application` - the version output, or the `GIMPController::run`: the remote GIMP instance, the sanity check and the run of GIMP.
 
-The GIMP option entries, the platform specific and the console specific code stay in [`src/gimp/app/main.c`](/src/gimp/app/main.c) for now. The C++ code logs the warnings and the errors only, into the standard error stream, and creates no log file. The template `SignalsHandler` component is in place, yet not installed, since the GIMP signal handlers keep their own semantics so far.
+The platform specifics of the former `main.c` are the virtual methods of the `GIMPController`, which the `LinuxGIMPController`, the `MacOSGIMPController` and the `WindowsGIMPController` implement; Meson builds the one of the current platform. Each GIMP executable gets its own compilation of the controller, the console one with the `GIMP_CONSOLE_COMPILATION` macro, as it got `main.c`. The controller reaches the GIMP C code through the [`gimp-c-includes.h`](/src/gimp-controller/gimp-c-includes.h) only, which the unit tests replace with the mocks of the GIMP C functions. The C++ code logs the warnings and the errors only, into the standard error stream, and creates no log file. The template `SignalsHandler` component is in place, yet not installed, since the GIMP signal handlers keep their own semantics so far.
 
 # Building
 

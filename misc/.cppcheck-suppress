@@ -1,3 +1,5 @@
 nullPointer:assert.cpp
 missingIncludeSystem
 unusedStructMember
+// The GIMP headers stay out of the scope of the C++ checks.
+missingInclude:*src/gimp-controller/gimp-c-includes.h

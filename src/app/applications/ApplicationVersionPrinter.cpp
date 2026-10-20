@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <memory>
 
-#include "src/gimp/app/main.h"
+#include "src/gimp-controller/GIMPController.h"
 #include "src/log/log.h"
 
 namespace app
@@ -19,7 +19,7 @@ int ApplicationVersionPrinter::run(std::shared_ptr<ApplicationContext> ctx)
     return INVALID;
   }
 
-  gimp_main_show_version();
+  ctx->get_gimp_controller().show_version();
 
   return EXIT_SUCCESS;
 }

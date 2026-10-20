@@ -1,15 +1,20 @@
 #include "src/app/ApplicationContext.h"
 
+#include <cassert>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace app
 {
 
-ApplicationContext::ApplicationContext(int& gargc, char**& gargv,
-                                       GimpMainOptions& options)
-    : margc{gargc}, margv{gargv}, moptions{options}
+ApplicationContext::ApplicationContext(
+    int& gargc, char**& gargv,
+    std::shared_ptr<gimp_controller::GIMPController> gimpController)
+    : margc{gargc}, margv{gargv}, mgimp_controller{std::move(gimpController)}
 {
+  assert(mgimp_controller != nullptr);
 }
 
 ApplicationContext::~ApplicationContext()
@@ -37,7 +42,10 @@ void ApplicationContext::adopt_argv(char** argvCopy)
   margv_adopted = true;
 }
 
-GimpMainOptions& ApplicationContext::get_options() const { return moptions; }
+gimp_controller::GIMPController& ApplicationContext::get_gimp_controller() const
+{
+  return *mgimp_controller;
+}
 
 void ApplicationContext::adopt_option_context(GOptionContext* optionContext)
 {

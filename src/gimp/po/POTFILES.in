@@ -4,12 +4,14 @@
 desktop/org.gimp.GIMP.appdata.xml.in.in
 desktop/gimp.desktop.in.in
 
+../gimp-controller/GIMPController.cpp
+../gimp-controller/windows/WindowsGIMPController.cpp
+
 app/about.h
 app/app.c
 app/gimp-update.c
 app/gimp-version.c
 app/language.c
-app/main.c
 app/sanity.c
 
 app/actions/actions.c

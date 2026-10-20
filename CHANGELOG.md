@@ -18,3 +18,4 @@ Based on the `GIMP_3_2_6` release of GIMP.
 - Renaming the project into gimpxx
 - Naming GIMPxx, based on GIMP, in the user interface
 - Naming the header guards after the gimpxx project
+- Porting the main.c of GIMP into the GIMPController platform classes

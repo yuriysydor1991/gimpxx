@@ -10,8 +10,9 @@ namespace app
 {
 
 /**
- * @brief The GIMP application: it runs GIMP once the command line is parsed,
- * here or through the already running GIMP instance.
+ * @brief The GIMP application: it runs GIMP through the GIMPController of the
+ * context once the command line is parsed, here or through the already running
+ * GIMP instance.
  */
 class Application : public IApplication
 {
@@ -20,10 +21,8 @@ class Application : public IApplication
   Application() = default;
 
   /**
-   * @brief Runs GIMP the way the end of the main() of GIMP did: names the
-   * process, attaches the console window on Windows when the output needs
-   * it, passes the command line to the already running instance if there is
-   * one, checks the sanity of the libraries and runs GIMP at last.
+   * @brief Runs GIMP with the program name and the backtrace file of the
+   * context. See the gimp_controller::GIMPController::run method.
    *
    * @param ctx Application's run context with command line parameters etc.
    *

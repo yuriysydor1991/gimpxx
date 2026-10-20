@@ -185,20 +185,55 @@ else
 endif
 
 # The C++ entry layer of gimpxx (src/main.cpp, src/app, src/log), which
-# starts GIMP through the start-up steps of main.c. It is declared here, since
-# Meson accepts no target before the add_project_arguments() calls of the
-# GIMP tree, and linked whole into both executables, as their main() is in it.
+# starts GIMP through the GIMPController. It is declared here, since Meson
+# accepts no target before the add_project_arguments() calls of the GIMP tree,
+# and linked whole into both executables, as their main() is in it.
+gimpxx_override_options = [ 'cpp_std=c++17', 'warning_level=3' ]
+
 gimpxx_lib = static_library('gimpxx',
   gimpxx_sources,
   include_directories: gimpxx_includes,
   dependencies: [ glib, gimpxx_extra_deps ],
   cpp_args: gimpxx_extra_cpp_args,
-  override_options: [ 'cpp_std=c++17', 'warning_level=3' ],
+  override_options: gimpxx_override_options,
+)
+
+# The GIMPController, the former main.c, calls the GIMP C code, so each
+# executable gets its own compilation of it, as it got main.c. The headers of
+# the GIMP dependencies are system ones there, out of the C++ warnings scope.
+gimpxx_controller_includes = [ gimpxx_includes, rootInclude, rootAppInclude ]
+gimpxx_controller_args = [ gimpxx_extra_cpp_args, libapp_c_args ]
+gimpxx_controller_deps = [ gimpxx_extra_deps ]
+
+# The found libraries add no headers.
+foreach dep : gimpconsole_deps
+  if dep.type_name() != 'library'
+    gimpxx_controller_deps += dep.partial_dependency(
+      compile_args: true, includes: true).as_system()
+  endif
+endforeach
+
+gimpxx_controller_lib = static_library('gimpxx-gimp-controller',
+  gimp_controller_sources,
+  include_directories: gimpxx_controller_includes,
+  dependencies: [
+    gimpxx_controller_deps,
+    gtk3.partial_dependency(compile_args: true, includes: true).as_system(),
+  ],
+  cpp_args: gimpxx_controller_args,
+  override_options: gimpxx_override_options,
 )
 
 if enable_console_bin
+  gimpxx_controller_console_lib = static_library('gimpxx-gimp-controller-console',
+    gimp_controller_sources,
+    include_directories: gimpxx_controller_includes,
+    dependencies: gimpxx_controller_deps,
+    cpp_args: [ gimpxx_controller_args, '-DGIMP_CONSOLE_COMPILATION' ],
+    override_options: gimpxx_override_options,
+  )
+
   gimpconsole_exe = executable(gimpconsole_exe_name,
-    'main.c',
     libapp_sources,
     console_rc_file,
     c_args: [ libapp_c_args, '-DGIMP_CONSOLE_COMPILATION', ],
@@ -207,7 +242,7 @@ if enable_console_bin
       app_libgimps,
       console_libapps
     ],
-    link_whole: gimpxx_lib,
+    link_whole: [ gimpxx_lib, gimpxx_controller_console_lib ],
     include_directories: [
       rootInclude,
       rootAppInclude,
@@ -219,15 +254,13 @@ if enable_console_bin
 endif
 
 gimpmain_exe = executable(gimpmain_exe_name,
-  'main.c',
   gui_rc_file,
-  c_args: libapp_c_args,
   dependencies: libapp_dep,
   link_with: [
     app_libgimps,
     gui_libapps,
   ],
-  link_whole: gimpxx_lib,
+  link_whole: [ gimpxx_lib, gimpxx_controller_lib ],
   link_args: gimpxx_extra_link_args,
   win_subsystem: 'windows',
   install: true,

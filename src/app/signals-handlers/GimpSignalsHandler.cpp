@@ -3,7 +3,7 @@
 #include <cassert>
 #include <memory>
 
-#include "src/gimp/app/main.h"
+#include "src/gimp-controller/GIMPController.h"
 #include "src/log/log.h"
 
 namespace app
@@ -18,12 +18,7 @@ bool GimpSignalsHandler::install(std::shared_ptr<ApplicationContext> ctx)
     return false;
   }
 
-  gchar* const backtraceFile = gimp_main_init_signals();
-
-  if (backtraceFile != nullptr) {
-    ctx->set_backtrace_file(backtraceFile);
-    g_free(backtraceFile);
-  }
+  ctx->set_backtrace_file(ctx->get_gimp_controller().init_signals());
 
   return true;
 }

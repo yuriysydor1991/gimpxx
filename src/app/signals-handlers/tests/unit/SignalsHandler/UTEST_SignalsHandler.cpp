@@ -12,8 +12,10 @@
 #include "src/app/signals-handlers/handlers/posix/ReloadSignalsHandler.h"
 #include "src/app/signals-handlers/handlers/posix/StopSignalsHandler.h"
 #include "src/app/signals-handlers/handlers/posix/UserSignalsHandler.h"
+#include "src/gimp-controller/GIMPController.h"
 
 using namespace app;
+using namespace gimp_controller;
 using namespace testing;
 
 /// @brief Exposes the protected members to the test cases.
@@ -44,7 +46,7 @@ class UTEST_SignalsHandler : public Test
 
   std::shared_ptr<ApplicationContext> create_context()
   {
-    return std::make_shared<ApplicationContext>(argc, argv, options);
+    return std::make_shared<ApplicationContext>(argc, argv, gimpController);
   }
 
   /**
@@ -135,7 +137,8 @@ class UTEST_SignalsHandler : public Test
 
   int argc{0};
   char** argv{nullptr};
-  GimpMainOptions options{};
+  std::shared_ptr<GIMPController> gimpController{
+      std::make_shared<GIMPController>()};
 
   int createdSubhandlers{0};
 

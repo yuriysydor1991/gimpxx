@@ -9,8 +9,8 @@ namespace app
 {
 
 /**
- * @brief The command line parser which fills the GIMP start-up options of the
- * ApplicationContext.
+ * @brief The command line parser which fills the GIMP options of the
+ * GIMPController the ApplicationContext holds.
  *
  * It scans the arguments for the few options GIMP needs before its option
  * parsing first, then parses them with the GIMP option context, the same way

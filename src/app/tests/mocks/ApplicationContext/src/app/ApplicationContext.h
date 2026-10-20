@@ -1,6 +1,7 @@
 #ifndef GIMPXX_PROJECT_APPLICATIONCONTEXT_CLASS_H
 #define GIMPXX_PROJECT_APPLICATIONCONTEXT_CLASS_H
 
+#include <glib.h>
 #include <gmock/gmock.h>
 
 #include <atomic>
@@ -8,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "src/gimp/app/main.h"
+#include "src/gimp-controller/GIMPController.h"
 
 namespace app
 {
@@ -16,7 +17,9 @@ namespace app
 class ApplicationContext
 {
  public:
-  ApplicationContext(int& gargc, char**& gargv, GimpMainOptions& options);
+  ApplicationContext(
+      int& gargc, char**& gargv,
+      std::shared_ptr<gimp_controller::GIMPController> gimpController);
 
   int& get_argc() const { return margc; }
   char**& get_argv() const { return margv; }
@@ -27,7 +30,10 @@ class ApplicationContext
     margv = argvCopy;
   }
 
-  GimpMainOptions& get_options() const { return moptions; }
+  gimp_controller::GIMPController& get_gimp_controller() const
+  {
+    return *mgimp_controller;
+  }
 
   MOCK_METHOD(void, adopt_option_context, (GOptionContext * optionContext));
 
@@ -73,7 +79,7 @@ class ApplicationContext
   char**& margv;
   std::unique_ptr<char*, decltype(&g_strfreev)> madopted_argv{nullptr,
                                                               &g_strfreev};
-  GimpMainOptions& moptions;
+  std::shared_ptr<gimp_controller::GIMPController> mgimp_controller;
   std::unique_ptr<GOptionContext, decltype(&g_option_context_free)>
       moption_context{nullptr, &g_option_context_free};
   std::string mbacktrace_file;

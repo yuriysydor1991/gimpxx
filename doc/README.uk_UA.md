@@ -13,6 +13,7 @@
 | [`meson.build`](/meson.build), [`meson_options.txt`](/meson_options.txt) | Корінь побудови. Спочатку йдуть опції GIMP (малими літерами), за ними опції шаблону (великими літерами) |
 | [`meson`](/meson) | Модулі Meson шаблону (`gimpxx-*`): захист бінарних файлів, санітайзери, перевірки коду, профілювальники, пакувальники |
 | [`src/main.cpp`](/src/main.cpp), [`src/app`](/src/app), [`src/log`](/src/log) | Прикладний C++ рівень шаблону, який запускає GIMP |
+| [`src/gimp-controller`](/src/gimp-controller) | `gimp_controller::GIMPController` та його класи платформ, колишній `main.c` GIMP |
 | [`src/gimp`](/src/gimp) | Оригінальне дерево GIMP разом з підмодулем [`gimp-data`](/src/gimp/gimp-data). Його [`README`](/src/gimp/README) - це README від GIMP |
 | [`doc`](/doc) | Розділи документації, діаграми та конфігурація Doxygen |
 | [`misc`](/misc), [`scripts`](/scripts) | Конфігурації стилю та перевірок коду, шаблони пакунків та допоміжні скрипти |
@@ -27,15 +28,15 @@
 
 # Запуск GIMP
 
-Файл [`src/main.cpp`](/src/main.cpp) викликає `app::ApplicationFactory::execute`. Фабрика виконує кроки запуску колишньої функції `main()` GIMP в їхньому початковому порядку, через C функції з [`src/gimp/app/main.h`](/src/gimp/app/main.h):
+Файл [`src/main.cpp`](/src/main.cpp) викликає `app::ApplicationFactory::execute`. Фабрика створює `gimp_controller::GIMPController` поточної платформи, колишній `main.c` GIMP ([`src/gimp-controller`](/src/gimp-controller)), і виконує його кроки запуску в початковому порядку функції `main()` GIMP:
 
-1. `gimp_main_init_platform` - оточення Windows та macOS і вікно консолі;
-1. `GimpSignalsHandler` - трасування стеку та обробники сигналів GIMP;
-1. `gimp_main_init_process` - оточення GLib та GIMP, журналювання GIMP, переклади та копія аргументів, якою володіє `ApplicationContext`;
-1. `CommandLineParser` - пошук опцій детального виводу, роботи без інтерфейсу та версії, а потім розбір опцій GIMP;
-1. `ApplicationVersionPrinter` або `Application` - вивід версії, або вже запущений екземпляр GIMP, перевірка бібліотек та запуск GIMP.
+1. `GIMPController::init_platform` - командний рядок від ОС, оточення платформи та вікно консолі;
+1. `GimpSignalsHandler` - трасування стеку та обробники сигналів GIMP, через `GIMPController::init_signals`;
+1. `GIMPController::init_process` - підготовка процесу платформи, оточення GLib та GIMP, журналювання GIMP, переклади та копія аргументів, якою володіє `ApplicationContext`;
+1. `CommandLineParser` - пошук опцій детального виводу, роботи без інтерфейсу та версії, а потім розбір опцій GIMP, якими володіє контролер;
+1. `ApplicationVersionPrinter` або `Application` - вивід версії, або `GIMPController::run`: вже запущений екземпляр GIMP, перевірка бібліотек та запуск GIMP.
 
-Опції GIMP, а також код окремих платформ та консольної програми поки що залишаються у [`src/gimp/app/main.c`](/src/gimp/app/main.c). C++ код журналює лише попередження та помилки, у стандартний потік помилок, і не створює файлу журналу. Компонент `SignalsHandler` шаблону присутній, але не встановлюється, оскільки обробники сигналів GIMP поки що зберігають власну поведінку.
+Особливості платформ колишнього `main.c` - це віртуальні методи `GIMPController`, які реалізують `LinuxGIMPController`, `MacOSGIMPController` та `WindowsGIMPController`; Meson будує реалізацію поточної платформи. Кожен виконуваний файл GIMP отримує власну компіляцію контролера, консольний - з макросом `GIMP_CONSOLE_COMPILATION`, так само як він отримував `main.c`. Контролер звертається до C коду GIMP лише через [`gimp-c-includes.h`](/src/gimp-controller/gimp-c-includes.h), який модульні тести замінюють на імітації C функцій GIMP. C++ код журналює лише попередження та помилки, у стандартний потік помилок, і не створює файлу журналу. Компонент `SignalsHandler` шаблону присутній, але не встановлюється, оскільки обробники сигналів GIMP поки що зберігають власну поведінку.
 
 # Побудова
 

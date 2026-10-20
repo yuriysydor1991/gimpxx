@@ -1,11 +1,15 @@
 #include "ApplicationContext.h"
 
+#include <memory>
+#include <utility>
+
 namespace app
 {
 
-ApplicationContext::ApplicationContext(int& gargc, char**& gargv,
-                                       GimpMainOptions& options)
-    : margc{gargc}, margv{gargv}, moptions{options}
+ApplicationContext::ApplicationContext(
+    int& gargc, char**& gargv,
+    std::shared_ptr<gimp_controller::GIMPController> gimpController)
+    : margc{gargc}, margv{gargv}, mgimp_controller{std::move(gimpController)}
 {
   // The pushed errors and the adopted option context are kept like the real
   // context keeps them, so the test cases see the errors through the

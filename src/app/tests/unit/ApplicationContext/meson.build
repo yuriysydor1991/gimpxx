@@ -8,6 +8,7 @@ UTEST_ApplicationContext = executable(
   UTEST_ApplicationContext_files, 
   dependencies: [gtest_deps, dependency('glib-2.0')],
   include_directories: [
+    MOCK_GIMPController,
     configuration_inc
   ],
   cpp_args: ['-DNDEBUG=1']

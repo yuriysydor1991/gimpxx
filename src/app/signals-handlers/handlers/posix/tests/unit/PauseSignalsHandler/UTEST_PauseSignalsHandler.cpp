@@ -5,8 +5,10 @@
 #include <memory>
 
 #include "src/app/signals-handlers/handlers/posix/PauseSignalsHandler.h"
+#include "src/gimp-controller/GIMPController.h"
 
 using namespace app;
+using namespace gimp_controller;
 using namespace testing;
 
 /// @brief Exposes the protected members to the test cases.
@@ -30,7 +32,7 @@ class UTEST_PauseSignalsHandler : public Test
 
   std::shared_ptr<ApplicationContext> create_context()
   {
-    return std::make_shared<ApplicationContext>(argc, argv, options);
+    return std::make_shared<ApplicationContext>(argc, argv, gimpController);
   }
 
   /// @brief Gives the covered signals the OS default disposition, since a
@@ -52,7 +54,8 @@ class UTEST_PauseSignalsHandler : public Test
 
   int argc{0};
   char** argv{nullptr};
-  GimpMainOptions options{};
+  std::shared_ptr<GIMPController> gimpController{
+      std::make_shared<GIMPController>()};
 
   std::shared_ptr<TestPauseSignalsHandler> handler;
   std::shared_ptr<ApplicationContext> appCtx;

@@ -1,11 +1,14 @@
 #ifndef GIMPXX_PROJECT_APPLICATIONCONTEXT_CLASS_H
 #define GIMPXX_PROJECT_APPLICATIONCONTEXT_CLASS_H
 
+#include <glib.h>
+
 #include <atomic>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "src/gimp/app/main.h"
+#include "src/gimp-controller/GIMPController.h"
 
 namespace app
 {
@@ -17,8 +20,8 @@ namespace app
  * May hold parsed parameters, configuration values and error messages
  * with application status code. The command line parameters are parsed by
  * the CommandLineParser class instance inside the ApplicationFactory class,
- * into the GIMP start-up options the context refers to. The context owns the
- * GLib resources the start-up of GIMP allocates for the whole run.
+ * into the GIMP options of the GIMPController the context holds. The context
+ * owns the GLib resources the start-up of GIMP allocates for the whole run.
  *
  * All the data members are private ones, so the held data is reachable through
  * the appropriate access methods only.
@@ -34,9 +37,12 @@ class ApplicationContext
    * @param gargv  The command line arguments array passed by the OS through
    * the main executable function that will be referenced in the margv member
    * field.
-   * @param options The GIMP start-up options the GIMP option entries fill.
+   * @param gimpController The controller which starts and runs GIMP, must not
+   * be nullptr.
    */
-  ApplicationContext(int& gargc, char**& gargv, GimpMainOptions& options);
+  ApplicationContext(
+      int& gargc, char**& gargv,
+      std::shared_ptr<gimp_controller::GIMPController> gimpController);
 
   /// @brief Frees the adopted command line arguments copy and option context.
   virtual ~ApplicationContext();
@@ -57,8 +63,8 @@ class ApplicationContext
   /// copy, which the GIMP option parsing modifies, and frees it at the end.
   void adopt_argv(char** argvCopy);
 
-  /// @brief Provides the GIMP start-up options.
-  GimpMainOptions& get_options() const;
+  /// @brief Provides the controller which starts and runs GIMP.
+  gimp_controller::GIMPController& get_gimp_controller() const;
 
   /// @brief Keeps the parsed GIMP option context until the end of the run.
   void adopt_option_context(GOptionContext* optionContext);
@@ -140,8 +146,8 @@ class ApplicationContext
   /// @brief Tells if margv holds the adopted copy of the arguments.
   bool margv_adopted{false};
 
-  /// @brief The GIMP start-up options.
-  GimpMainOptions& moptions;
+  /// @brief The controller which starts and runs GIMP.
+  std::shared_ptr<gimp_controller::GIMPController> mgimp_controller;
 
   /// @brief The adopted GIMP option context.
   GOptionContext* moption_context{nullptr};

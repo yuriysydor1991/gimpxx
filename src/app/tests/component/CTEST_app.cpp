@@ -8,20 +8,43 @@
 #include "src/app/ApplicationFactory.h"
 #include "src/app/signals-handlers/GimpSignalsHandler.h"
 #include "src/app/signals-handlers/SignalsHandler.h"
-#include "src/gimp/app/main.h"
+#include "src/gimp-controller/gimp-c-includes.h"
+#include "src/gimp-controller/linux/LinuxGIMPController.h"
 
 using namespace app;
+using namespace gimp_controller;
 using namespace testing;
 
 class CTEST_app : public Test
 {
  public:
-  CTEST_app() { seam.reset(); }
+  CTEST_app()
+      : glibWarningsHandler{
+            g_log_set_handler("GLib", G_LOG_LEVEL_WARNING,
+                              &skip_the_application_name_warning, nullptr)}
+  {
+    gimp.reset();
+  }
 
   ~CTEST_app() override
   {
-    seam.reset();
+    gimp.reset();
     g_strfreev(args);
+    g_log_remove_handler("GLib", glibWarningsHandler);
+  }
+
+  /// @brief Skips the warning of the application name, which every GIMP
+  /// start-up of the test process sets again, and passes the other GLib
+  /// warnings on.
+  static void skip_the_application_name_warning(const gchar* logDomain,
+                                                GLogLevelFlags logLevel,
+                                                const gchar* message,
+                                                gpointer data)
+  {
+    if (g_strcmp0(message, "g_set_application_name() called multiple times") !=
+        0) {
+      g_log_default_handler(logDomain, logLevel, message, data);
+    }
   }
 
   /// @brief Runs the ApplicationFactory::execute with the given space
@@ -37,15 +60,30 @@ class CTEST_app : public Test
     return ApplicationFactory::execute(realArgc, realArgv);
   }
 
-  /// @brief Expects GIMP to run on its own, as the only instance.
-  void expect_the_gimp_run(const Matcher<const gchar*>& backtraceFile)
+  /// @brief Expects GIMP to run on its own, as the only instance, with the
+  /// given app_run arguments.
+  void expect_the_gimp_run(const Matcher<const AppRunArgs&>& appRunArgs)
   {
-    EXPECT_CALL(seam.gimp_main_check_sanity, Call()).Times(1);
-    EXPECT_CALL(seam.gimp_main_run, Call(StrEq("CTEST_app"), backtraceFile))
+    EXPECT_CALL(gimp.sanity_check_early, Call()).Times(1);
+    EXPECT_CALL(
+        gimp.app_run,
+        Call(AllOf(Field(&AppRunArgs::full_prog_name, StrEq("CTEST_app")),
+                   appRunArgs)))
         .WillOnce(Return(EXIT_SUCCESS));
+    EXPECT_CALL(gimp.gimp_env_exit, Call(FALSE)).Times(1);
   }
 
-  gimpMainMock& seam{gimpMainMock::instance()};
+  /// @brief Makes the GIMP signal handlers choose the given backtrace file.
+  void expect_the_backtrace_file(const gchar* const backtraceFile)
+  {
+    EXPECT_CALL(gimp.gimp_backtrace_init, Call()).Times(1);
+    EXPECT_CALL(gimp.gimp_init_signal_handlers, Call(NotNull()))
+        .WillOnce(
+            [backtraceFile](gchar** file) { *file = g_strdup(backtraceFile); });
+  }
+
+  const guint glibWarningsHandler;
+  gimpCMock& gimp{gimpCMock::instance()};
 
   int argc{0};
   char** argv{nullptr};
@@ -61,8 +99,9 @@ TEST_F(CTEST_app, create_default_context_success)
 {
   auto actx = facade.create_default_context(argc, argv);
 
-  EXPECT_NE(actx, nullptr);
-  EXPECT_EQ(&actx->get_options(), gimp_main_options());
+  ASSERT_NE(actx, nullptr);
+  EXPECT_NE(dynamic_cast<LinuxGIMPController*>(&actx->get_gimp_controller()),
+            nullptr);
 }
 
 TEST_F(CTEST_app, create_default_arg_parser_success)
@@ -102,9 +141,7 @@ TEST_F(CTEST_app, default_signals_handler_keeps_the_backtrace_file)
   auto actx = facade.create_default_context(argc, argv);
   auto shandler = facade.create_default_signals_handler();
 
-  EXPECT_CALL(seam.gimp_main_init_signals, Call()).WillOnce([]() {
-    return g_strdup("CTEST_app.backtrace");
-  });
+  expect_the_backtrace_file("CTEST_app.backtrace");
 
   EXPECT_TRUE(shandler->install(actx));
 
@@ -223,70 +260,70 @@ TEST_F(CTEST_app, signals_handler_ignores_the_broken_pipe)
 
 TEST_F(CTEST_app, execute_runs_gimp_with_the_backtrace_file)
 {
-  EXPECT_CALL(seam.gimp_main_init_platform, Call(_, _)).Times(1);
-  EXPECT_CALL(seam.gimp_main_init_signals, Call()).WillOnce([]() {
-    return g_strdup("CTEST_app.backtrace");
-  });
-  EXPECT_CALL(seam.gimp_main_init_process, Call(_)).Times(1);
-  EXPECT_CALL(seam.gimp_main_option_context_new, Call()).Times(1);
-  EXPECT_CALL(seam.gimp_main_run_remote, Call(_)).Times(1);
-  expect_the_gimp_run(StrEq("CTEST_app.backtrace"));
+  expect_the_backtrace_file("CTEST_app.backtrace");
+  EXPECT_CALL(gimp.gimp_env_init, Call(FALSE)).Times(1);
+  EXPECT_CALL(gimp.app_libs_init, Call(NotNull(), FALSE)).Times(1);
+  EXPECT_CALL(gimp.gimp_early_rc_new, Call(IsNull(), IsNull(), FALSE)).Times(1);
+  EXPECT_CALL(gimp.gimp_unique_open, Call(NotNull(), FALSE))
+      .WillOnce(Return(FALSE));
+  expect_the_gimp_run(
+      AllOf(Field(&AppRunArgs::backtrace_file, StrEq("CTEST_app.backtrace")),
+            Field(&AppRunArgs::filenames, Truly([](const gchar** filenames) {
+              return filenames != nullptr &&
+                     g_strcmp0(filenames[0], "image.xcf") == 0 &&
+                     filenames[1] == nullptr;
+            }))));
 
   EXPECT_EQ(execute_with("CTEST_app image.xcf"), EXIT_SUCCESS);
 }
 
 TEST_F(CTEST_app, version_is_shown_instead_of_the_gimp_run)
 {
-  EXPECT_CALL(seam.gimp_main_show_version, Call()).Times(1);
-  EXPECT_CALL(seam.gimp_main_option_context_new, Call()).Times(0);
-  EXPECT_CALL(seam.gimp_main_run, Call(_, _)).Times(0);
+  EXPECT_CALL(gimp.gimp_version_show, Call(FALSE)).Times(1);
+  EXPECT_CALL(gimp.app_libs_init, Call(_, _)).Times(0);
+  EXPECT_CALL(gimp.app_run, Call(_)).Times(0);
 
   EXPECT_EQ(execute_with("CTEST_app --version"), EXIT_SUCCESS);
-
-  EXPECT_FALSE(gimp_main_options()->be_verbose);
 }
 
 TEST_F(CTEST_app, short_version_is_the_verbose_one)
 {
-  EXPECT_CALL(seam.gimp_main_show_version, Call()).Times(1);
-  EXPECT_CALL(seam.gimp_main_run, Call(_, _)).Times(0);
+  EXPECT_CALL(gimp.gimp_version_show, Call(TRUE)).Times(1);
+  EXPECT_CALL(gimp.app_run, Call(_)).Times(0);
 
   EXPECT_EQ(execute_with("CTEST_app -v"), EXIT_SUCCESS);
-
-  EXPECT_TRUE(gimp_main_options()->be_verbose);
 }
 
-TEST_F(CTEST_app, no_interface_runs_a_new_instance_in_the_console)
+TEST_F(CTEST_app, no_interface_runs_a_new_instance)
 {
-  EXPECT_CALL(seam.gimp_main_attach_console, Call()).Times(1);
-  EXPECT_CALL(seam.gimp_main_run_remote, Call(_)).Times(0);
-  expect_the_gimp_run(IsNull());
+  EXPECT_CALL(gimp.app_libs_init, Call(NotNull(), TRUE)).Times(1);
+  EXPECT_CALL(gimp.gdk_display_get_default, Call()).Times(0);
+  EXPECT_CALL(gimp.gimp_unique_open, Call(_, _)).Times(0);
+  expect_the_gimp_run(AllOf(Field(&AppRunArgs::no_interface, TRUE),
+                            Field(&AppRunArgs::backtrace_file, IsNull())));
 
   EXPECT_EQ(execute_with("CTEST_app --no-interface"), EXIT_SUCCESS);
-
-  EXPECT_TRUE(gimp_main_options()->no_interface);
-  EXPECT_TRUE(gimp_main_options()->new_instance);
 }
 
 TEST_F(CTEST_app, running_instance_takes_the_command_line_over)
 {
-  EXPECT_CALL(seam.gimp_main_run_remote, Call(NotNull()))
-      .WillOnce(DoAll(SetArgPointee<0>(EXIT_FAILURE), Return(TRUE)));
-  EXPECT_CALL(seam.gimp_main_check_sanity, Call()).Times(0);
-  EXPECT_CALL(seam.gimp_main_run, Call(_, _)).Times(0);
+  EXPECT_CALL(gimp.gimp_unique_open, Call(NotNull(), FALSE))
+      .WillOnce(Return(TRUE));
+  EXPECT_CALL(gimp.gimp_unique_batch_run, Call(IsNull(), NotNull()))
+      .WillOnce(Return(FALSE));
+  EXPECT_CALL(gimp.gdk_notify_startup_complete, Call()).Times(1);
+  EXPECT_CALL(gimp.sanity_check_early, Call()).Times(0);
+  EXPECT_CALL(gimp.app_run, Call(_)).Times(0);
 
-  EXPECT_EQ(execute_with("CTEST_app image.xcf"), EXIT_FAILURE);
+  EXPECT_EQ(execute_with("CTEST_app --batch=(gimp-quit) image.xcf"),
+            EXIT_FAILURE);
 }
 
 TEST_F(CTEST_app, unknown_option_fails_before_the_gimp_run)
 {
-  EXPECT_CALL(seam.gimp_main_option_context_new, Call()).WillOnce([]() {
-    return g_option_context_new(nullptr);
-  });
-  EXPECT_CALL(seam.gimp_main_report_parse_error,
-              Call(Field(&GError::message, HasSubstr("--bogus"))))
-      .Times(1);
-  EXPECT_CALL(seam.gimp_main_run, Call(_, _)).Times(0);
+  EXPECT_CALL(gimp.app_libs_init, Call(NotNull(), FALSE)).Times(1);
+  EXPECT_CALL(gimp.gimp_early_rc_new, Call(_, _, _)).Times(0);
+  EXPECT_CALL(gimp.app_run, Call(_)).Times(0);
 
   EXPECT_NE(execute_with("CTEST_app --bogus"), EXIT_SUCCESS);
 }

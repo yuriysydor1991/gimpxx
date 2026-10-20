@@ -23,7 +23,8 @@ class GimpSignalsHandler : public ISignalsHandler
 
   /**
    * @brief Initializes the GIMP backtraces and installs the GIMP signal
-   * handlers. The context keeps the backtrace file they chose.
+   * handlers through the GIMPController of the context, which keeps the
+   * backtrace file they chose.
    *
    * @param ctx The application context.
    *

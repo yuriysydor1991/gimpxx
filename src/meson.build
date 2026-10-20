@@ -14,12 +14,13 @@ endif
 # The logging subsystem goes first: it sets the project wide log macros
 # arguments, which Meson accepts before the first target only.
 subdir('log')
+subdir('gimp-controller')
 subdir('app')
 
 # The C++ entry layer of gimpxx, which starts GIMP. The GIMP tree calls
 # add_project_arguments() as well, so the layer can not be a target before
-# it: src/gimp/app/meson.build builds it of these sources and links the
-# GIMP executables of it.
+# it: src/gimp/app/meson.build builds it of these sources and of the
+# gimp_controller_sources and links the GIMP executables of it.
 gimpxx_sources = files('main.cpp') + app_sources + log_sources
 gimpxx_includes = configuration_inc
 
@@ -95,4 +96,5 @@ if get_option('ENABLE_UNIT_TESTS') or get_option('ENABLE_COMPONENT_TESTS')
   subdir('app/signals-handlers/tests')
   subdir('app/signals-handlers/handlers/tests')
   subdir('app/signals-handlers/handlers/posix/tests')
+  subdir('gimp-controller/tests')
 endif
