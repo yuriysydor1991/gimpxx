@@ -6,76 +6,76 @@ gimpxx_extra_link_args = []
 # The sanitizers instrumentation every target, the tests among them, carries.
 gimpxx_sanitizers_deps = []
 
-subdir('gimpxx-hardening')
+subdir('gimpxx-project-hardening')
 
-subdir('gimpxx-all-source-files')
-subdir('gimpxx-misc-variables-declare')
-subdir('gimpxx-configure-file')
+subdir('gimpxx-project-all-source-files')
+subdir('gimpxx-project-misc-variables-declare')
+subdir('gimpxx-project-configure-file')
 
 if get_option('ENABLE_SANITIZERS') or get_option('ENABLE_SANITIZERS_THREADS')
-  subdir('gimpxx-sanitizers')
+  subdir('gimpxx-project-sanitizers')
 endif
 
 if get_option('ENABLE_GPROF')
-  subdir('gimpxx-profiler-gprof')
+  subdir('gimpxx-project-profiler-gprof')
 endif
 
 if get_option('ENABLE_CPPCHECK')
-  subdir('gimpxx-cppcheck-target')
+  subdir('gimpxx-project-cppcheck-target')
 endif
 
 if get_option('ENABLE_CLANGFORMAT')
-  subdir('gimpxx-clang-format-target')
+  subdir('gimpxx-project-clang-format-target')
 endif
 
 if get_option('ENABLE_CLANG_TIDY')
-  subdir('gimpxx-clang-tidy-target')
+  subdir('gimpxx-project-clang-tidy-target')
 endif
 
 if get_option('ENABLE_LIBCURL')
-  subdir('gimpxx-libcurl-enabler')
+  subdir('gimpxx-project-libcurl-enabler')
 endif
 
 if get_option('ENABLE_LIBXML2')
-  subdir('gimpxx-libxml2-enabler')
+  subdir('gimpxx-project-libxml2-enabler')
 endif
 
 if get_option('ENABLE_NLOHMANN_JSON')
-  subdir('gimpxx-nlohmann-json-enabler')
+  subdir('gimpxx-project-nlohmann-json-enabler')
 endif
 
 if get_option('ENABLE_OPENCV')
-  subdir('gimpxx-OpenCV-enabler')
+  subdir('gimpxx-project-OpenCV-enabler')
 endif
 
 if get_option('ENABLE_FLATPAK')
-  subdir('gimpxx-flatpak-target')
+  subdir('gimpxx-project-flatpak-target')
 endif
 
 if get_option('ENABLE_SNAP')
-  subdir('gimpxx-snap-enabler')
+  subdir('gimpxx-project-snap-enabler')
 endif
 
 if get_option('ENABLE_DEB')
-  subdir('gimpxx-deb-enabler')
+  subdir('gimpxx-project-deb-enabler')
 endif
 
 if get_option('ENABLE_RPM')
-  subdir('gimpxx-rpm-enabler')
+  subdir('gimpxx-project-rpm-enabler')
 endif
 
 if get_option('ENABLE_FREEBSD_PKG')
-  subdir('gimpxx-freebsd-pkg-enabler')
+  subdir('gimpxx-project-freebsd-pkg-enabler')
 endif
 
 if get_option('ENABLE_APPIMAGE')
-  subdir('gimpxx-AppImage-enabler')
+  subdir('gimpxx-project-AppImage-enabler')
 endif
 
 if get_option('ENABLE_WIX')
-  subdir('gimpxx-wix-enabler')
+  subdir('gimpxx-project-wix-enabler')
 endif
 
 if get_option('ENABLE_DOCKER')
-  subdir('gimpxx-dockerers')
+  subdir('gimpxx-project-dockerers')
 endif

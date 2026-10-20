@@ -8,6 +8,6 @@
 meson setup build -DENABLE_OPENCV=true
 ```
 
-Залежність шукається через `dependency('opencv4', required: true)` (спочатку pkg-config, потім CMake-конфіг). Знайдена залежність додається до змінної `gimpxx_extra_deps` у файлі `meson/gimpxx-OpenCV-enabler/meson.build` і підключається до головного бінарника і `applib`.
+Залежність шукається через `dependency('opencv4', required: true)` (спочатку pkg-config, потім CMake-конфіг). Знайдена залежність додається до змінної `gimpxx_extra_deps` у файлі `meson/gimpxx-project-OpenCV-enabler/meson.build` і підключається до головного бінарника і `applib`.
 
 Деталі встановлення системного пакету: [Необов'язкові пакети для інтеграції OpenCV](/doc/sections/uk_UA/3-12-optional-for-the-OpenCV-integration.md).

@@ -16,4 +16,4 @@ And to perform the actual static code analysis by itself run the `cppcheck` targ
 meson compile -C builddir cppcheck
 ```
 
-The `cppcheck` target details may be examined and/or altered in the `meson/gimpxx-cppcheck-target/meson.build` Meson submodule file.
+The `cppcheck` target details may be examined and/or altered in the `meson/gimpxx-project-cppcheck-target/meson.build` Meson submodule file.

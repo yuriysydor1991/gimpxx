@@ -18,8 +18,8 @@ configure_file(
     'PROJECT_BINARY_INSTALLATION_DIR': join_paths(snap_install_prefix, 'bin').substring(1),
     'SNAP_INSTALL_PREFIX': snap_install_prefix,
     'PROJECT_SOURCE_DIR': meson.project_source_root(),
-    'TEMPLATE_PROJECT_SNAP_GRADE': snap_grade,
-    'TEMPLATE_PROJECT_SNAP_CONFINEMENT': snap_confinement,
+    'GIMPXX_PROJECT_SNAP_GRADE': snap_grade,
+    'GIMPXX_PROJECT_SNAP_CONFINEMENT': snap_confinement,
   },
   input: join_paths(meson.project_source_root(), 'misc', 'snap', 'snapcraft.yaml.meson.in')
 )

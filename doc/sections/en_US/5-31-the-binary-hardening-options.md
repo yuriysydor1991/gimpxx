@@ -1,6 +1,6 @@
 ## The binary hardening options
 
-The template hardens every binary it produces, so nothing has to be enabled for that. The options follow the [Compiler Options Hardening Guide for C and C++](https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html) of the OpenSSF and live in the [meson/gimpxx-hardening/meson.build](/meson/gimpxx-hardening/meson.build) module, which hands them over to the `add_project_arguments` and the `add_project_link_arguments` commands, so every target of the project takes them.
+The template hardens every binary it produces, so nothing has to be enabled for that. The options follow the [Compiler Options Hardening Guide for C and C++](https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html) of the OpenSSF and live in the [meson/gimpxx-project-hardening/meson.build](/meson/gimpxx-project-hardening/meson.build) module, which hands them over to the `add_project_arguments` and the `add_project_link_arguments` commands, so every target of the project takes them.
 
 ### The GCC and the clang compile time options
 
