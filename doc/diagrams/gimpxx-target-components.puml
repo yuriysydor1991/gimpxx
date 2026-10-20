@@ -1,0 +1,74 @@
+@startuml gimpxx-target-components
+' The components of gimpxx after the top-level layer transition.
+' See doc/plans/02-gimpxx-cpp-transition-plan.md and
+' doc/plans/03-gimpxx-top-level-layer-design.md.
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "Executable entry" {
+  [main() (src/main.cpp)] as main
+}
+
+package "app (src/app, the cpp-app-template layer)" {
+  [ApplicationFactory] as factory
+  [CommandLineParser\n(GOptionContext inside)] as parser
+  [ApplicationContext\n+ StartupOptions] as ctx
+  [CMDParamNames] as names
+  [IApplication\n(Application, HelpPrinter, VersionPrinter,\nLicensePrinter, GimprcDump, PdbDeprecatedDump,\nRemoteInstanceApplication)] as iapp
+  [platform::IPlatformEnvironment\n(posix, win32, macos)] as platform
+  [ISignalsHandler\n(SignalsHandler + Terminate/Fatal/\nIgnored/Child, Win32 filter)] as signals
+}
+
+package "converters (src/converters)" {
+  [ApplicationContext2GimpRunContext] as conv
+}
+
+package "gimp_adaptor (src/gimp-adaptor)" {
+  [ProcessBootstrap] as boot
+  [EarlyConfiguration /\nLibraryOptionGroups] as early
+  [LanguageInitializer / SanityChecker] as lang
+  [RemoteInstance] as remote
+  [GimpController + GimpRunContext] as ctrl
+  [runners::ICoreAppRunner\n(Console, Gui)] as runner
+  [ErrorsHandler] as errors
+  [VersionInfo / UpdateChecker /\nGimprcDumper / PdbDeprecatedDumper] as facades
+}
+
+package "Supporting" {
+  [log (DefaultLogger, GLibLogBridge, cpplog4c)] as log
+  [helpers::glib (RAII)] as raii
+}
+
+package "GIMP C (app/, libgimp*/, ...)" {
+  [core/gimp.c: gimp_new, initialize,\nrestore, exit] as gimpc
+  [gimpcoreapp.c / gimpconsoleapp.c /\ngui/gimpapp.c] as gapps
+  [gui/gui.c, dialogs, widgets, ...] as guic
+  [gimp-version.c / gimp-update.c /\ngimp-log.c / gimp-debug.c] as cshared
+}
+
+main --> factory
+factory --> platform
+factory --> boot
+factory --> signals
+factory --> parser
+factory --> iapp : creates by ctx
+parser --> ctx : fills
+parser ..> names
+parser --> early : hooks and groups
+early --> lang
+signals --> errors
+iapp --> conv
+conv --> ctrl : GimpRunContext
+iapp --> remote
+iapp --> facades
+iapp --> lang : early sanity
+ctrl --> runner
+ctrl --> errors
+ctrl --> gimpc
+runner --> gapps
+runner --> guic : gui_init, dialogs
+facades --> cshared
+facades --> gimpc
+factory ..> log
+ctrl ..> raii
+@enduml

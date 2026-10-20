@@ -1,0 +1,94 @@
+@startuml gimpxx-current-layers
+' The layers of the GIMP 3.3 code base as inherited by gimpxx (b7f8cac066),
+' top to bottom. See doc/plans/01-gimpxx-architecture-analysis.md.
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "L0 Process entry and application glue (app/*.c, 7.1K)" {
+  [main.c\nmain()] as main
+  [app.c\napp_run(), activate] as appc
+  [signals.c / errors.c] as sig
+  [sanity.c / language.c / unique.c] as misc
+  [gimp-version.c / gimp-update.c\ngimp-log.c / gimp-debug.c] as shared
+}
+
+package "L1 GApplication glue" {
+  [GimpCoreApp (interface)] as coreapp
+  [GimpConsoleApp] as consoleapp
+  [GimpApp (GtkApplication)] as guiapp
+}
+
+package "L2 GUI assembly (app/gui, 8K)" {
+  [gui_init / gui-vtable / session /\nsplash / themes / unique service] as gui
+}
+
+package "L3 GUI frameworks (397K)" {
+  [widgets] as widgets
+  [display] as display
+  [tools] as tools
+  [actions / menus / dialogs / propgui] as actions
+}
+
+package "L4 Core services (289K)" {
+  [core: Gimp root object,\nimages, items, data, undo] as core
+  [config: GimpRc] as config
+  [pdb (803 procedures)] as pdb
+  [plug-in manager] as plugin
+  [xcf / file / file-data / text / path] as files
+}
+
+package "L5 Engine (59K)" {
+  [gegl / operations / paint] as engine
+}
+
+package "L6 Public libraries (196K, frozen C ABI)" {
+  [libgimpbase (wire protocol)] as base
+  [libgimpcolor / math / config / module / thumb] as libs
+  [libgimpwidgets] as libwidgets
+  [libgimp / libgimpui (plug-in API, GIR)] as libgimp
+}
+
+package "L7 External" {
+  [GLib/GObject/GIO, GTK 3, GEGL/babl,\ncairo, pango, lcms2, gexiv2, ...] as ext
+}
+
+package "Beside the stack" {
+  [plug-ins (separate processes)] as plugins
+  [modules (GTypeModule)] as modules
+}
+
+main --> appc
+main --> sig
+main --> misc
+appc --> consoleapp
+appc --> guiapp
+appc --> gui : gui_init()
+consoleapp ..|> coreapp
+guiapp ..|> coreapp
+appc --> core : gimp_new/initialize/\nrestore/exit
+gui --> widgets
+gui --> display
+gui --> tools
+gui --> actions
+widgets --> core
+display --> core
+tools --> core
+actions --> core
+core ..> gui : GimpGui vtable,\nsignals (inversion)
+core ..> coreapp : gimp->app\n(upward edge)
+core --> config
+core --> pdb
+core --> plugin
+core --> files
+core --> engine
+pdb --> plugin
+plugin --> base : wire protocol
+plugins --> libgimp
+libgimp --> base
+libwidgets --> libs
+engine --> ext
+core --> libs
+widgets --> libwidgets
+modules --> libwidgets
+plugin ..> plugins : pipes / shm
+@enduml

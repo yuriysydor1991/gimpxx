@@ -1,0 +1,60 @@
+@startuml gimpxx-startup-sequence
+' The gimpxx start-up after the top-level layer transition, and the
+' app/main.c and app/app.c lines each step replaces.
+' See doc/plans/03-gimpxx-top-level-layer-design.md, sections 6 and 7.
+hide footbox
+skinparam shadowing false
+
+participant "main()" as main
+participant ApplicationFactory as factory
+participant IPlatformEnvironment as platform
+participant ProcessBootstrap as boot
+participant ISignalsHandler as signals
+participant CommandLineParser as parser
+participant "IApplication\n(Application)" as app
+participant GimpController as ctrl
+participant ICoreAppRunner as runner
+participant "GIMP C\n(core, gui)" as gimp
+
+main -> factory : execute(argc, argv)
+factory -> platform : preinit(argc, argv)\n[main.c:682-722]
+factory -> factory : logger init (+ GLibLogBridge with --log-file)
+factory -> boot : prepare_crash_reporting(ctx)\n[main.c:728, signals.c:86-101]
+factory -> signals : install(ctx)\n[main.c:731, signals.c]
+factory -> platform : process_setup()\n[main.c:733-820]
+factory -> boot : early_init(ctx)\n[main.c:822-838]
+factory -> parser : parse_args(ctx)
+activate parser
+parser -> parser : prescan (version, license,\nhelp, dumps, -i, --verbose)\n[main.c:840-878]
+parser -> gimp : GOptionContext parse:\ngimp hook = EarlyConfiguration,\nGEGL group, GTK group (display)\n[main.c:884-920]
+deactivate parser
+factory -> factory : create_application(ctx)
+factory -> app : run(ctx)
+activate app
+app -> gimp : SanityChecker::check_early()\n[main.c:1031-1033]
+app -> app : ApplicationContext2GimpRunContext
+app -> ctrl : perform(runCtx)
+activate ctrl
+ctrl -> gimp : gimp_new()\n[app.c:234]
+ctrl -> runner : create_core_app()\n[app.c:251-262]
+ctrl -> runner : run_user_install() when needed\n[app.c:268-289]
+ctrl -> gimp : gimp_load_config(), ErrorsHandler::init(),\ncheck_late(), gimp_gegl_init()\n[app.c:291-314]
+ctrl -> gimp : g_application_run()\n[app.c:323]
+gimp -> ctrl : activate
+ctrl -> runner : init_gui()  (gui_init)\n[app.c:398-402]
+ctrl -> gimp : gimp_initialize(), gimp_restore()\n[app.c:410, 429]
+ctrl -> runner : recover_images()\n[app.c:436-486]
+ctrl -> gimp : update check, open files,\ngimp_batch_run()\n[app.c:496-538]
+alt with --quit
+  ctrl -> gimp : gimp_exit(gimp, TRUE)
+else console mode without --quit
+  ctrl -> runner : after_activate()  (hold, SIGINT = gimp_exit)
+end
+gimp -> ctrl : exit (after) -> g_application_quit()
+ctrl -> gimp : teardown: gimp_gegl_exit(), ErrorsHandler::exit(),\nunref, gimp_debug_instances(), gegl_exit()\n[app.c:325-346]
+deactivate ctrl
+app --> factory : exit status
+deactivate app
+factory -> boot : shutdown()  (gimp_env_exit)
+factory --> main : exit status
+@enduml

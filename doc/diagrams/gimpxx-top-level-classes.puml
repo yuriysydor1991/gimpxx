@@ -1,0 +1,193 @@
+@startuml gimpxx-top-level-classes
+' The classes of the gimpxx top-level layer.
+' See doc/plans/03-gimpxx-top-level-layer-design.md, section 3.
+hide empty members
+
+package app {
+  interface IApplication {
+    +run(ctx) : int
+    +{static} INVALID : int
+  }
+  class Application
+  class ApplicationHelpPrinter
+  class ApplicationVersionPrinter
+  class ApplicationLicensePrinter
+  class GimprcDumpApplication
+  class PdbDeprecatedDumpApplication
+  class RemoteInstanceApplication <<GUI only>> {
+    -wrapped : IApplication
+  }
+
+  class ApplicationFactory {
+    +{static} execute(argc, argv) : int
+    +run(argc, argv) : int
+    +create_default_context(argc, argv)
+    +create_platform_environment()
+    +create_bootstrap()
+    +create_default_signals_handler()
+    +create_default_arg_parser()
+    +create_application(ctx) : IApplication
+    +create_default_application() : IApplication
+  }
+
+  class ApplicationContext {
+    +get_argc() : int&
+    +get_argv() : char**&
+    +print_help / version / license flags
+    +help_section : string
+    +gimprc_dump_format : GimprcDumpFormat
+    +dump_pdb_deprecated : bool
+    +log_file / backtrace_file / full_prog_name
+    +errors, stop, pause, reload, user requests
+    +startup_options() : StartupOptions&
+  }
+
+  class StartupOptions <<struct>> {
+    +gimprc paths, session, batch, filenames
+    +quit, as_new, no_interface, no_data, no_fonts,
+     no_splash, be_verbose, new_instance, use_shm,
+     use_cpu_accel, console_messages, ...
+    +stack_trace_mode : StackTraceMode
+    +pdb_compat_mode : PdbCompatMode
+  }
+
+  class CommandLineParser {
+    +parse_args(ctx) : bool
+    +{static} get_custom_logfile(argc, argv) : string
+    #prescan(ctx)
+    #create_option_context(ctx, storage)
+    #apply(storage, ctx)
+  }
+  class CMDParamNames
+
+  interface ISignalsHandler {
+    +install(ctx) : bool
+    +uninstall()
+  }
+  class SignalsHandler
+  abstract class ASignalsHandler {
+    #get_handled_signals()
+    #get_signal_disposition()
+    #get_flags()
+  }
+  class TerminateSignalsHandler
+  class FatalSignalsHandler
+  class IgnoredSignalsHandler
+  class ChildSignalsHandler
+
+  package platform {
+    interface IPlatformEnvironment {
+      +preinit(argc, argv)
+      +process_setup()
+      +attach_console()
+      +shutdown()
+    }
+    class PosixPlatformEnvironment
+    class Win32PlatformEnvironment
+    class MacOSPlatformEnvironment
+  }
+}
+
+package converters {
+  class ApplicationContext2GimpRunContext {
+    +convert(appctx, runctx) : bool
+  }
+}
+
+package gimp_adaptor {
+  class ProcessBootstrap {
+    +prepare_crash_reporting(ctx)
+    +early_init(ctx)
+    +apply_flatpak_prgname()
+    +shutdown()
+  }
+  class EarlyConfiguration
+  class LibraryOptionGroups
+  class LanguageInitializer
+  class SanityChecker {
+    +check_early() : optional<string>
+    +check_late() : optional<string>
+  }
+  interface IRemoteInstance {
+    +open(files, as_new) : bool
+    +batch_run(interpreter, commands) : bool
+  }
+  class RemoteInstance
+  class GimpRunContext
+  class GimpController {
+    +perform(runCtx) : int
+    #on_activate()
+    #on_exit_after()
+  }
+  interface ICoreAppRunner {
+    +create_core_app(gimp, runCtx)
+    +run_user_install(install)
+    +abort(message)
+    +init_gui(gimp, app, lang)
+    +recover_images(gimp)
+    +after_activate(gimp)
+  }
+  class ConsoleCoreAppRunner
+  class GuiCoreAppRunner <<GUI only>>
+  class ErrorsHandler {
+    +init(...)
+    +exit()
+    +recovered(gimp)
+    +fatal_error(msg)
+    +terminate(msg)
+  }
+  class VersionInfo
+  class UpdateChecker
+  class GimprcDumper
+  class PdbDeprecatedDumper
+}
+
+IApplication <|.. Application
+IApplication <|.. ApplicationHelpPrinter
+IApplication <|.. ApplicationVersionPrinter
+IApplication <|.. ApplicationLicensePrinter
+IApplication <|.. GimprcDumpApplication
+IApplication <|.. PdbDeprecatedDumpApplication
+IApplication <|.. RemoteInstanceApplication
+RemoteInstanceApplication o--> IApplication : wraps
+ISignalsHandler <|.. SignalsHandler
+ISignalsHandler <|.. ASignalsHandler
+ASignalsHandler <|-- TerminateSignalsHandler
+ASignalsHandler <|-- FatalSignalsHandler
+ASignalsHandler <|-- IgnoredSignalsHandler
+ASignalsHandler <|-- ChildSignalsHandler
+IPlatformEnvironment <|.. PosixPlatformEnvironment
+IPlatformEnvironment <|.. Win32PlatformEnvironment
+IPlatformEnvironment <|.. MacOSPlatformEnvironment
+IRemoteInstance <|.. RemoteInstance
+ICoreAppRunner <|.. ConsoleCoreAppRunner
+ICoreAppRunner <|.. GuiCoreAppRunner
+
+ApplicationFactory ..> IApplication : creates
+ApplicationFactory ..> CommandLineParser : creates
+ApplicationFactory ..> ISignalsHandler : creates, installs
+ApplicationFactory ..> IPlatformEnvironment : creates
+ApplicationFactory ..> ProcessBootstrap : creates
+ApplicationContext *-- StartupOptions
+CommandLineParser --> ApplicationContext : fills
+CommandLineParser ..> CMDParamNames
+CommandLineParser ..> EarlyConfiguration : gimp group hook
+CommandLineParser ..> LibraryOptionGroups : GEGL / GTK groups
+EarlyConfiguration ..> LanguageInitializer
+SignalsHandler o--> ASignalsHandler : creates
+TerminateSignalsHandler ..> ErrorsHandler : terminate()
+FatalSignalsHandler ..> ErrorsHandler : fatal_error()
+Application ..> SanityChecker : check_early()
+Application ..> ApplicationContext2GimpRunContext
+ApplicationContext2GimpRunContext ..> GimpRunContext : fills
+Application ..> GimpController : perform()
+GimpController --> ICoreAppRunner
+GimpController ..> ErrorsHandler
+GimpController ..> SanityChecker : check_late()
+GimpController ..> UpdateChecker
+RemoteInstanceApplication --> IRemoteInstance
+ApplicationVersionPrinter ..> VersionInfo
+ApplicationLicensePrinter ..> VersionInfo
+GimprcDumpApplication ..> GimprcDumper
+PdbDeprecatedDumpApplication ..> PdbDeprecatedDumper
+@enduml
