@@ -17,3 +17,4 @@ Based on the `GIMP_3_2_6` release of GIMP.
 - Documenting the gimpxx layout and start-up
 - Renaming the project into gimpxx
 - Naming GIMPxx, based on GIMP, in the user interface
+- Naming the header guards after the gimpxx project

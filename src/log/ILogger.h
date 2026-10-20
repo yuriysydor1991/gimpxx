@@ -1,5 +1,5 @@
-#ifndef YOUR_CPP_APP_TEMPLATE_PROJECT_ILOGGER_CLASS_H
-#define YOUR_CPP_APP_TEMPLATE_PROJECT_ILOGGER_CLASS_H
+#ifndef GIMPXX_PROJECT_ILOGGER_CLASS_H
+#define GIMPXX_PROJECT_ILOGGER_CLASS_H
 
 #include <memory>
 #include <string>
@@ -123,4 +123,4 @@ using ILoggerPtr = ILogger::ILoggerPtr;
 
 }  // namespace logger
 
-#endif  // YOUR_CPP_APP_TEMPLATE_PROJECT_ILOGGER_CLASS_H
+#endif  // GIMPXX_PROJECT_ILOGGER_CLASS_H

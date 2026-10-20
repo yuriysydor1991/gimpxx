@@ -1,5 +1,5 @@
-#ifndef YOUR_CPP_APP_TEMPLATE_PROJECT_GROUPINGNUMPUNCT_CLASS_H
-#define YOUR_CPP_APP_TEMPLATE_PROJECT_GROUPINGNUMPUNCT_CLASS_H
+#ifndef GIMPXX_PROJECT_GROUPINGNUMPUNCT_CLASS_H
+#define GIMPXX_PROJECT_GROUPINGNUMPUNCT_CLASS_H
 
 #include <locale>
 #include <string>
@@ -17,4 +17,4 @@ class GroupingNumpunct : public std::numpunct<char>
   std::string do_grouping() const override;
 };
 
-#endif  // YOUR_CPP_APP_TEMPLATE_PROJECT_GROUPINGNUMPUNCT_CLASS_H
+#endif  // GIMPXX_PROJECT_GROUPINGNUMPUNCT_CLASS_H
