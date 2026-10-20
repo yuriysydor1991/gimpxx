@@ -12,9 +12,13 @@ filter_script_args()
     BUILD_ARGS=()
 
     for arg in "$@" ; do
-        if [[ ${arg} != --install ]] ; then
-            BUILD_ARGS+=("${arg}")
-        fi
+        case "${arg}" in
+            --install|--rebuild)
+                ;;
+            *)
+                BUILD_ARGS+=("${arg}")
+                ;;
+        esac
     done
 }
 

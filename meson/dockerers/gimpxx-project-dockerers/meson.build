@@ -1,4 +1,4 @@
-find_program('docker', required: true)
+docker_exec = find_program('docker', required: true)
 
 DOCKER_SINGLE_RUN_NAME = meson.project_name().to_lower() + '-docker-single-run'
 DOCKERFILE_SRC = join_paths(meson.project_source_root(), 'misc', 'Dockerfile.meson.in')
@@ -15,15 +15,25 @@ configure_file(
   configuration : conf_data
 )
 
-docker_single_run_cmd_str = 'docker build -f ' + DOCKERFILE_DST_PATH + ' --build-context project='
-docker_single_run_cmd_str += meson.project_source_root() + ' --build-arg CACHEBUST="' + timestamp + '" -t' + DOCKER_SINGLE_RUN_NAME
-docker_single_run_cmd_str += ' . && docker run --rm ' + DOCKER_SINGLE_RUN_NAME
+docker_single_build_target = custom_target(
+  'docker-single-build',
+  command: [
+    docker_exec, 'build', '-f', DOCKERFILE_DST_PATH,
+    '--build-context', 'project=' + meson.project_source_root(),
+    '--build-arg', 'CACHEBUST=' + timestamp,
+    '-t', DOCKER_SINGLE_RUN_NAME, '.'
+  ],
+  env: ['DOCKER_BUILDKIT=1'],
+  build_always_stale: false,
+  output: 'docker-single-build-stub.txt',
+  console: true
+)
 
 docker_single_run_target = custom_target(
   'docker-single-run',
-  command: ['sh', '-c', docker_single_run_cmd_str],
-  env: ['DOCKER_BUILDKIT=1'],
+  command: [docker_exec, 'run', '--rm', DOCKER_SINGLE_RUN_NAME],
+  depends: docker_single_build_target,
   build_always_stale: false,
-  output: 'docker-output-stub.txt',
+  output: 'docker-single-run-stub.txt',
   console: true
 )

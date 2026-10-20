@@ -16,4 +16,25 @@ meson setup build -DENABLE_DOCKER=true
 meson compile -C build docker-single-run 
 ```
 
-Для деталей цілі побудови `docker-single-run` слід звернутись до файлу `meson/dockerers/gimpxx-project-dockerers/meson.build`.
+Ціль `docker-single-run` залежить від цілі `docker-single-build`, яка лише будує образ. Для деталей обох цілей слід звернутись до файлу `meson/dockerers/gimpxx-project-dockerers/meson.build`.
+
+### Скрипти запуску
+
+Директорія [scripts/docker](/scripts/docker) містить скорочення, які виконують обидві наведені вище команди, отож увесь запуск виконується однією командою:
+
+| Скрипт | Запускає Meson-ціль |
+| --- | --- |
+| [single-run.sh](/scripts/docker/single-run.sh) | `docker-single-run` |
+| [single-build.sh](/scripts/docker/single-build.sh) | `docker-single-build` |
+
+```
+# в середині кореневої директорії проекту
+
+scripts/docker/single-run.sh
+```
+
+Кожен з них конфігурує директорію `build/docker` як release-збірку з параметром `ENABLE_DOCKER` у значенні `true` і потім будує потрібну ціль, отож жодної власної команди `docker` не виконується. Ця директорія відокремлена від директорії `build/release` скриптів [scripts/build](/scripts/build), отож параметри Docker ніколи не потрапляють до їхніх збірок. Скрипт [single-run.sh](/scripts/docker/single-run.sh) будує і образ теж, отож скрипт [single-build.sh](/scripts/docker/single-build.sh) потрібен лише для побудови образу без запуску контейнера.
+
+Кожен додатковий параметр скриптів передається кроку `meson setup`, отож власний параметр `-D<опція>=<значення>` переважає встановлені скриптами. Крок конфігурації виконується на хост-системі, тому їй потрібні залежності побудови проекту, хоча образ будує проект ще раз самостійно.
+
+Слід пам'ятати, що параметр `ENABLE_DOCKER` робить наявність виконуваного файлу `docker` у системі обов'язковою для кроку конфігурації, отож на машині без встановленого Docker скрипти завершать крок конфігурації помилкою (див. секцію вимог [Необов'язкові пакети для запуску контейнера Docker](/doc/sections/uk_UA/3-10-optional-for-docker-container-runs.md)).

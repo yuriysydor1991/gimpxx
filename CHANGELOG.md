@@ -22,3 +22,4 @@ Based on the `GIMP_3_2_6` release of GIMP.
 - Naming the Meson modules after the gimpxx project
 - Grouping the Meson modules into categories, as the template CMake ones
 - Splitting the hardening options per compiler family, as the template CMake ones
+- Adopting the template scripts/docker scripts, with the docker-single-build and the Jenkins pipeline Meson targets they start
