@@ -11,7 +11,7 @@
 | Шлях | Вміст |
 |---|---|
 | [`meson.build`](/meson.build), [`meson_options.txt`](/meson_options.txt) | Корінь побудови. Спочатку йдуть опції GIMP (малими літерами), за ними опції шаблону (великими літерами) |
-| [`meson`](/meson) | Модулі Meson шаблону (`gimpxx-project-*`): захист бінарних файлів, санітайзери, перевірки коду, профілювальники, пакувальники |
+| [`meson`](/meson) | Модулі Meson шаблону (`gimpxx-project-*`) за категоріями, як модулі CMake шаблону: `compile-options` (захист бінарних файлів, санітайзери), `enablers` (перевірки коду, бібліотеки), `profilers` (профілювальники), `packagers` (пакувальники), `dockerers` (Docker) |
 | [`src/main.cpp`](/src/main.cpp), [`src/app`](/src/app), [`src/log`](/src/log) | Прикладний C++ рівень шаблону, який запускає GIMP |
 | [`src/gimp-controller`](/src/gimp-controller) | `gimp_controller::GIMPController` та його класи платформ, колишній `main.c` GIMP |
 | [`src/gimp`](/src/gimp) | Оригінальне дерево GIMP разом з підмодулем [`gimp-data`](/src/gimp/gimp-data). Його [`README`](/src/gimp/README) - це README від GIMP |

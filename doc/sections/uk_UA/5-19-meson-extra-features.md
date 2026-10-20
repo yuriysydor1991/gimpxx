@@ -1,6 +1,6 @@
 ## Додаткові можливості Meson
 
-Гілка `appMeson` пропонує Meson-еквівалент набору можливостей CMake з гілки `app`. Кожна функція вмикається відповідним прапорцем у `meson_options.txt` під час конфігурування: `meson setup -D<OPTION>=true`. Інтеграція виконується через Meson-змінні `gimpxx_extra_deps`, `gimpxx_extra_cpp_args` і `gimpxx_extra_link_args`, до яких кожен модуль `meson/gimpxx-<feature>-*/meson.build` додає своє значення.
+Гілка `appMeson` пропонує Meson-еквівалент набору можливостей CMake з гілки `app`. Кожна функція вмикається відповідним прапорцем у `meson_options.txt` під час конфігурування: `meson setup -D<OPTION>=true`. Інтеграція виконується через Meson-змінні `gimpxx_extra_deps`, `gimpxx_extra_cpp_args` і `gimpxx_extra_link_args`, до яких кожен модуль `meson/<категорія>/gimpxx-project-*/meson.build` додає своє значення.
 
 Матриця нижче ставить у відповідність кожній опції її окрему підсекцію, щоб команди, підказки по встановленню і деталі цілей знаходились поруч з функцією, яку вони вмикають.
 

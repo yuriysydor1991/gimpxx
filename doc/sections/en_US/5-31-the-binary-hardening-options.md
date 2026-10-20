@@ -1,6 +1,6 @@
 ## The binary hardening options
 
-The template hardens every binary it produces, so nothing has to be enabled for that. The options follow the [Compiler Options Hardening Guide for C and C++](https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html) of the OpenSSF and live in the [meson/gimpxx-project-hardening/meson.build](/meson/gimpxx-project-hardening/meson.build) module, which hands them over to the `add_project_arguments` and the `add_project_link_arguments` commands, so every target of the project takes them.
+The template hardens every binary it produces, so nothing has to be enabled for that. The options follow the [Compiler Options Hardening Guide for C and C++](https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html) of the OpenSSF and live in a module per compiler family: the [gimpxx-project-hardening-GCC](/meson/compile-options/gimpxx-project-hardening/gimpxx-project-hardening-GCC/meson.build) one for the GCC and the clang, the [gimpxx-project-hardening-MSVC](/meson/compile-options/gimpxx-project-hardening/gimpxx-project-hardening-MSVC/meson.build) one for the MSVC. The [meson/compile-options/gimpxx-project-hardening/meson.build](/meson/compile-options/gimpxx-project-hardening/meson.build) module takes the one the `gimpxx_compiler_family` variable of the [meson/compile-options/meson.build](/meson/compile-options/meson.build) names and appends its options to the `gimpxx_extra_cpp_args` and the `gimpxx_extra_link_args`, so every gimpxx target takes them while the GIMP tree keeps its own flags.
 
 ### The GCC and the clang compile time options
 
@@ -45,7 +45,7 @@ The position independent executable comes from the `b_pie` base option the `proj
 | `/HIGHENTROPYVA` | the 64 bit address space randomization of the image |
 | `/CETCOMPAT` | marks the image as a shadow stack compatible one |
 
-The module takes them when the `cpp.get_argument_syntax()` reports the `msvc` one. The [MSVC compiler options](https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-by-category?view=msvc-170) and the [MSVC linker options](https://learn.microsoft.com/en-us/cpp/build/reference/linker-options?view=msvc-170) documentation describes them in detail.
+The `gimpxx_compiler_family` is the `MSVC` one when the `cpp.get_argument_syntax()` reports the `msvc` syntax (the cl and the clang-cl compilers) and the `GCC` one for any other compiler. The [MSVC compiler options](https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-by-category?view=msvc-170) and the [MSVC linker options](https://learn.microsoft.com/en-us/cpp/build/reference/linker-options?view=msvc-170) documentation describes them in detail.
 
 ### The unsupported options are dropped
 

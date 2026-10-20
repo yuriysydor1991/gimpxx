@@ -16,4 +16,4 @@ After that there should be available the Docker build and run Meson target `dock
 meson compile -C build docker-single-run
 ```
 
-Examine the `meson/gimpxx-project-dockerers/meson.build` file for the `docker-single-run` target details.
+Examine the `meson/dockerers/gimpxx-project-dockerers/meson.build` file for the `docker-single-run` target details.

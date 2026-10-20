@@ -18,6 +18,6 @@ meson setup build -DENABLE_SNAP=true
 meson compile -C build snap
 ```
 
-Артефакт іменується за шаблоном `<проект>_<версія>_<арх>.snap` і потрапляє у директорію побудови. Деталі і параметри цілі можна переглянути або змінити у файлах `meson/gimpxx-project-snap-enabler/meson.build` чи у шаблоні `misc/snap/snapcraft.yaml.meson.in`.
+Артефакт іменується за шаблоном `<проект>_<версія>_<арх>.snap` і потрапляє у директорію побудови. Деталі і параметри цілі можна переглянути або змінити у файлах `meson/packagers/gimpxx-project-snap-enabler/meson.build` чи у шаблоні `misc/snap/snapcraft.yaml.meson.in`.
 
 Деталі встановлення `snapcraft`: [Необов'язкові пакети для пакувальника snap](/doc/sections/uk_UA/3-13-optional-for-the-snap-packager.md).

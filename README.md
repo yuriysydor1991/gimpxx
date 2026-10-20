@@ -13,7 +13,7 @@ The very same text is also available in Ukrainian under [doc/README.uk_UA.md](/d
 | Path | Content |
 |---|---|
 | [`meson.build`](/meson.build), [`meson_options.txt`](/meson_options.txt) | The root of the build. The GIMP options (lower case) come first, the template ones (upper case) follow them |
-| [`meson`](/meson) | The template Meson modules (`gimpxx-project-*`): hardening, sanitizers, code checks, profilers, packagers |
+| [`meson`](/meson) | The template Meson modules (`gimpxx-project-*`) by category, as the CMake ones of the template: `compile-options` (hardening, sanitizers), `enablers` (code checks, libraries), `profilers`, `packagers`, `dockerers` |
 | [`src/main.cpp`](/src/main.cpp), [`src/app`](/src/app), [`src/log`](/src/log) | The template C++ application layer, which starts GIMP |
 | [`src/gimp-controller`](/src/gimp-controller) | The `gimp_controller::GIMPController` and its platform classes, the former `main.c` of GIMP |
 | [`src/gimp`](/src/gimp) | The original GIMP tree with the [`gimp-data`](/src/gimp/gimp-data) submodule. Its [`README`](/src/gimp/README) is the GIMP one |

@@ -20,3 +20,5 @@ Based on the `GIMP_3_2_6` release of GIMP.
 - Naming the header guards after the gimpxx project
 - Porting the main.c of GIMP into the GIMPController platform classes
 - Naming the Meson modules after the gimpxx project
+- Grouping the Meson modules into categories, as the template CMake ones
+- Splitting the hardening options per compiler family, as the template CMake ones

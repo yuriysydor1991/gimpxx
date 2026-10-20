@@ -16,4 +16,4 @@ To perform the whole project code format in accordance with available `misc/.cla
 meson compile -C build clang-format
 ```
 
-The `clang-format` target details may be examined and/or altered in the `meson/gimpxx-project-clang-format-target/meson.build` Meson submodule file.
+The `clang-format` target details may be examined and/or altered in the `meson/enablers/gimpxx-project-clang-format-target/meson.build` Meson submodule file.

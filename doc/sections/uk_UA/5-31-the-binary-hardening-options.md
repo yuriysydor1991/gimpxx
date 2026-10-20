@@ -1,6 +1,6 @@
 ## Параметри захисту (hardening) бінарних файлів
 
-Шаблон захищає кожен бінарний файл, який будує, отож вмикати для цього нічого не потрібно. Параметри відповідають [Compiler Options Hardening Guide for C and C++](https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html) від OpenSSF і містяться у модулі [meson/gimpxx-project-hardening/meson.build](/meson/gimpxx-project-hardening/meson.build), який передає їх командам `add_project_arguments` та `add_project_link_arguments`, отож їх отримує кожна ціль проекту.
+Шаблон захищає кожен бінарний файл, який будує, отож вмикати для цього нічого не потрібно. Параметри відповідають [Compiler Options Hardening Guide for C and C++](https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html) від OpenSSF і містяться в окремому модулі для кожної родини компіляторів: [gimpxx-project-hardening-GCC](/meson/compile-options/gimpxx-project-hardening/gimpxx-project-hardening-GCC/meson.build) для GCC та clang, [gimpxx-project-hardening-MSVC](/meson/compile-options/gimpxx-project-hardening/gimpxx-project-hardening-MSVC/meson.build) для MSVC. Модуль [meson/compile-options/gimpxx-project-hardening/meson.build](/meson/compile-options/gimpxx-project-hardening/meson.build) бере той із них, який називає змінна `gimpxx_compiler_family` з [meson/compile-options/meson.build](/meson/compile-options/meson.build), і додає його параметри до `gimpxx_extra_cpp_args` та `gimpxx_extra_link_args`, отож їх отримує кожна ціль gimpxx, а дерево GIMP зберігає власні прапорці.
 
 ### Параметри компіляції GCC та clang
 
@@ -45,7 +45,7 @@
 | `/HIGHENTROPYVA` | 64-бітова рандомізація адресного простору образу |
 | `/CETCOMPAT` | позначає образ як сумісний із тіньовим стеком |
 
-Модуль бере їх, коли `cpp.get_argument_syntax()` повідомляє про синтаксис `msvc`. Детальний опис міститься у документації [MSVC compiler options](https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-by-category?view=msvc-170) та [MSVC linker options](https://learn.microsoft.com/en-us/cpp/build/reference/linker-options?view=msvc-170).
+Змінна `gimpxx_compiler_family` має значення `MSVC`, коли `cpp.get_argument_syntax()` повідомляє про синтаксис `msvc` (компілятори cl та clang-cl), і `GCC` для будь-якого іншого компілятора. Детальний опис міститься у документації [MSVC compiler options](https://learn.microsoft.com/en-us/cpp/build/reference/compiler-options-listed-by-category?view=msvc-170) та [MSVC linker options](https://learn.microsoft.com/en-us/cpp/build/reference/linker-options?view=msvc-170).
 
 ### Непідтримувані параметри відкидаються
 
