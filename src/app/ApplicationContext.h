@@ -1,14 +1,9 @@
 #ifndef GIMPXX_PROJECT_APPLICATIONCONTEXT_CLASS_H
 #define GIMPXX_PROJECT_APPLICATIONCONTEXT_CLASS_H
 
-#include <glib.h>
-
 #include <atomic>
-#include <memory>
 #include <string>
 #include <vector>
-
-#include "src/gimp-controller/GIMPController.h"
 
 namespace app
 {
@@ -20,8 +15,9 @@ namespace app
  * May hold parsed parameters, configuration values and error messages
  * with application status code. The command line parameters are parsed by
  * the CommandLineParser class instance inside the ApplicationFactory class,
- * into the GIMP options of the GIMPController the context holds. The context
- * owns the GLib resources the start-up of GIMP allocates for the whole run.
+ * into the options the Application starts its GIMPController with. The
+ * context owns the GLib copy of the arguments the start-up of GIMP allocates
+ * for the whole run.
  *
  * All the data members are private ones, so the held data is reachable through
  * the appropriate access methods only.
@@ -37,14 +33,10 @@ class ApplicationContext
    * @param gargv  The command line arguments array passed by the OS through
    * the main executable function that will be referenced in the margv member
    * field.
-   * @param gimpController The controller which starts and runs GIMP, must not
-   * be nullptr.
    */
-  ApplicationContext(
-      int& gargc, char**& gargv,
-      std::shared_ptr<gimp_controller::GIMPController> gimpController);
+  ApplicationContext(int& gargc, char**& gargv);
 
-  /// @brief Frees the adopted command line arguments copy and option context.
+  /// @brief Frees the adopted command line arguments copy.
   virtual ~ApplicationContext();
 
   ApplicationContext(const ApplicationContext&) = delete;
@@ -63,18 +55,26 @@ class ApplicationContext
   /// copy, which the GIMP option parsing modifies, and frees it at the end.
   void adopt_argv(char** argvCopy);
 
-  /// @brief Provides the controller which starts and runs GIMP.
-  gimp_controller::GIMPController& get_gimp_controller() const;
+  /// @brief Tells if the command line asks for the verbose output, which the
+  /// version output needs ahead of the GIMP option parsing.
+  bool get_be_verbose() const;
 
-  /// @brief Keeps the parsed GIMP option context until the end of the run.
-  void adopt_option_context(GOptionContext* optionContext);
+  /// @brief Sets the verbose output flag.
+  void set_be_verbose(const bool newValue);
 
-  /// @brief Provides the file the GIMP signal handlers write the backtraces
-  /// into, empty if there is none.
-  const std::string& get_backtrace_file() const;
+  /// @brief Tells if the command line asks to run without the user interface,
+  /// which GTK needs to know ahead of the GIMP option parsing.
+  bool get_no_interface() const;
 
-  /// @brief Sets the backtrace file the GIMP signal handlers chose.
-  void set_backtrace_file(const std::string& backtraceFile);
+  /// @brief Sets the no interface flag.
+  void set_no_interface(const bool newValue);
+
+  /// @brief Tells if the command line asks for the help output of the GIMP
+  /// option parsing, which needs the console window on Windows.
+  bool get_print_help() const;
+
+  /// @brief Sets the help output flag.
+  void set_print_help(const bool newValue);
 
   /// @brief Tells if the ApplicationFactory should create and run an
   /// ApplicationVersionPrinter instance.
@@ -146,14 +146,17 @@ class ApplicationContext
   /// @brief Tells if margv holds the adopted copy of the arguments.
   bool margv_adopted{false};
 
-  /// @brief The controller which starts and runs GIMP.
-  std::shared_ptr<gimp_controller::GIMPController> mgimp_controller;
+  /// @brief The verbose output flag. See the
+  /// ApplicationContext::get_be_verbose getter.
+  bool mbe_verbose{false};
 
-  /// @brief The adopted GIMP option context.
-  GOptionContext* moption_context{nullptr};
+  /// @brief The no interface flag. See the
+  /// ApplicationContext::get_no_interface getter.
+  bool mno_interface{false};
 
-  /// @brief The backtrace file of the GIMP signal handlers.
-  std::string mbacktrace_file;
+  /// @brief The help output flag. See the ApplicationContext::get_print_help
+  /// getter.
+  bool mprint_help{false};
 
   /// @brief The version printing flag. See the
   /// ApplicationContext::set_print_version_and_exit setter.

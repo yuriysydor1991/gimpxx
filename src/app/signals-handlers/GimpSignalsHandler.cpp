@@ -3,7 +3,6 @@
 #include <cassert>
 #include <memory>
 
-#include "src/gimp-controller/GIMPController.h"
 #include "src/log/log.h"
 
 namespace app
@@ -17,8 +16,6 @@ bool GimpSignalsHandler::install(std::shared_ptr<ApplicationContext> ctx)
     LOGE("No valid application context pointer provided");
     return false;
   }
-
-  ctx->set_backtrace_file(ctx->get_gimp_controller().init_signals());
 
   return true;
 }

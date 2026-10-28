@@ -1,30 +1,26 @@
+#include <glib.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <memory>
-#include <string>
 
 #include "src/app/CommandLineParser.h"
-#include "src/gimp-controller/GIMPController.h"
 
 using namespace app;
-using namespace gimp_controller;
 using namespace testing;
 
 class UTEST_CommandLineParser : public Test
 {
  public:
-  inline static const std::string expectedError{
-      "Fail to parse the command line"};
-
   UTEST_CommandLineParser()
       : parser{std::make_shared<CommandLineParser>()},
-        appctx{std::make_shared<ApplicationContext>(argc, argv, gimpController)}
+        appctx{std::make_shared<ApplicationContext>(argc, argv)}
   {
+    // The scan reports no errors, the GIMP option parsing does.
+    EXPECT_CALL(*appctx, push_error(_)).Times(0);
   }
 
-  /// @brief Makes the space separated command line the context one, a GLib
-  /// allocated copy as the GIMP start-up gives it.
+  /// @brief Makes the space separated command line the context one.
   void set_args(const gchar* const commandLine)
   {
     gchar** const args = g_strsplit(commandLine, " ", -1);
@@ -33,18 +29,18 @@ class UTEST_CommandLineParser : public Test
     appctx->adopt_argv(args);
   }
 
-  void expect_the_parsed_options(const int times)
+  /// @brief Expects the flags the scan of the command line gives.
+  void expect_the_flags(const bool beVerbose, const bool noInterface,
+                        const bool printVersion, const bool printHelp)
   {
-    EXPECT_CALL(*gimpController, create_option_context()).Times(times);
-    EXPECT_CALL(*appctx, adopt_option_context(NotNull())).Times(times);
-    EXPECT_CALL(*appctx, push_error(_)).Times(0);
+    EXPECT_EQ(appctx->get_be_verbose(), beVerbose);
+    EXPECT_EQ(appctx->get_no_interface(), noInterface);
+    EXPECT_EQ(appctx->get_print_version_and_exit(), printVersion);
+    EXPECT_EQ(appctx->get_print_help(), printHelp);
   }
 
   int argc{0};
   char** argv{nullptr};
-
-  std::shared_ptr<NiceMock<GIMPController>> gimpController{
-      std::make_shared<NiceMock<GIMPController>>()};
 
   std::shared_ptr<CommandLineParser> parser;
   std::shared_ptr<ApplicationContext> appctx;
@@ -52,174 +48,125 @@ class UTEST_CommandLineParser : public Test
 
 TEST_F(UTEST_CommandLineParser, no_context_error)
 {
-  EXPECT_CALL(*gimpController, create_option_context()).Times(0);
-
   EXPECT_FALSE(parser->parse_args({}));
 }
 
 TEST_F(UTEST_CommandLineParser, empty_context)
 {
-  expect_the_parsed_options(1);
-
-  EXPECT_CALL(*gimpController, set_be_verbose(_)).Times(0);
-  EXPECT_CALL(*gimpController, set_no_interface(_)).Times(0);
-
   EXPECT_TRUE(parser->parse_args(appctx));
 
-  EXPECT_FALSE(appctx->get_print_version_and_exit());
+  expect_the_flags(false, false, false, false);
 }
 
 TEST_F(UTEST_CommandLineParser, verbose)
 {
   set_args("binaryName --verbose");
-  expect_the_parsed_options(1);
-
-  EXPECT_CALL(*gimpController, set_be_verbose(true)).Times(1);
 
   EXPECT_TRUE(parser->parse_args(appctx));
 
-  EXPECT_FALSE(appctx->get_print_version_and_exit());
+  expect_the_flags(true, false, false, false);
 }
 
 TEST_F(UTEST_CommandLineParser, no_interface_short)
 {
   set_args("binaryName -i");
-  expect_the_parsed_options(1);
-
-  EXPECT_CALL(*gimpController, set_no_interface(true)).Times(1);
-  EXPECT_CALL(*gimpController, set_be_verbose(_)).Times(0);
 
   EXPECT_TRUE(parser->parse_args(appctx));
+
+  expect_the_flags(false, true, false, false);
 }
 
 TEST_F(UTEST_CommandLineParser, no_interface_long)
 {
   set_args("binaryName --no-interface");
-  expect_the_parsed_options(1);
-
-  EXPECT_CALL(*gimpController, set_no_interface(true)).Times(1);
-  EXPECT_CALL(*gimpController, set_be_verbose(_)).Times(0);
 
   EXPECT_TRUE(parser->parse_args(appctx));
+
+  expect_the_flags(false, true, false, false);
 }
 
 TEST_F(UTEST_CommandLineParser, version_short_is_verbose_too)
 {
   set_args("binaryName -v");
-  expect_the_parsed_options(0);
-
-  EXPECT_CALL(*gimpController, set_be_verbose(true)).Times(1);
 
   EXPECT_TRUE(parser->parse_args(appctx));
 
-  EXPECT_TRUE(appctx->get_print_version_and_exit());
+  expect_the_flags(true, false, true, false);
 }
 
 TEST_F(UTEST_CommandLineParser, version_long)
 {
   set_args("binaryName --version");
-  expect_the_parsed_options(0);
-
-  EXPECT_CALL(*gimpController, set_be_verbose(_)).Times(0);
 
   EXPECT_TRUE(parser->parse_args(appctx));
 
-  EXPECT_TRUE(appctx->get_print_version_and_exit());
+  expect_the_flags(false, false, true, false);
 }
 
 TEST_F(UTEST_CommandLineParser, the_verbose_after_the_version_counts)
 {
   set_args("binaryName --version --verbose");
-  expect_the_parsed_options(0);
-
-  EXPECT_CALL(*gimpController, set_be_verbose(true)).Times(1);
 
   EXPECT_TRUE(parser->parse_args(appctx));
 
-  EXPECT_TRUE(appctx->get_print_version_and_exit());
+  expect_the_flags(true, false, true, false);
 }
 
 TEST_F(UTEST_CommandLineParser, the_options_after_the_version_are_skipped)
 {
-  set_args("binaryName --version --no-interface");
-  expect_the_parsed_options(0);
-
-  EXPECT_CALL(*gimpController, set_no_interface(_)).Times(0);
+  set_args("binaryName --version --no-interface --help");
 
   EXPECT_TRUE(parser->parse_args(appctx));
 
-  EXPECT_TRUE(appctx->get_print_version_and_exit());
+  expect_the_flags(false, false, true, false);
 }
 
-TEST_F(UTEST_CommandLineParser, help_short_attaches_the_console)
+TEST_F(UTEST_CommandLineParser, the_options_before_the_version_count)
+{
+  set_args("binaryName --no-interface --help --version");
+
+  EXPECT_TRUE(parser->parse_args(appctx));
+
+  expect_the_flags(false, true, true, true);
+}
+
+TEST_F(UTEST_CommandLineParser, help_short)
 {
   set_args("binaryName -?");
-  expect_the_parsed_options(1);
-
-  EXPECT_CALL(*gimpController, attach_console()).Times(1);
 
   EXPECT_TRUE(parser->parse_args(appctx));
+
+  expect_the_flags(false, false, false, true);
 }
 
-TEST_F(UTEST_CommandLineParser, help_long_attaches_the_console)
+TEST_F(UTEST_CommandLineParser, help_long)
 {
   set_args("binaryName --help");
-  expect_the_parsed_options(1);
-
-  EXPECT_CALL(*gimpController, attach_console()).Times(1);
 
   EXPECT_TRUE(parser->parse_args(appctx));
+
+  expect_the_flags(false, false, false, true);
 }
 
-TEST_F(UTEST_CommandLineParser, help_group_attaches_the_console)
+TEST_F(UTEST_CommandLineParser, help_group)
 {
   set_args("binaryName --help-gtk");
-  expect_the_parsed_options(1);
-
-  EXPECT_CALL(*gimpController, attach_console()).Times(1);
 
   EXPECT_TRUE(parser->parse_args(appctx));
+
+  expect_the_flags(false, false, false, true);
 }
 
-TEST_F(UTEST_CommandLineParser, other_options_do_not_attach_the_console)
+TEST_F(UTEST_CommandLineParser, the_arguments_stay_for_the_gimp_option_parsing)
 {
   set_args("binaryName --verbose -i image.xcf");
-  expect_the_parsed_options(1);
 
-  EXPECT_CALL(*gimpController, attach_console()).Times(0);
-
-  EXPECT_TRUE(parser->parse_args(appctx));
-}
-
-TEST_F(UTEST_CommandLineParser, the_prescan_comes_before_the_option_context)
-{
-  set_args("binaryName --verbose --no-interface");
-
-  InSequence sequence;
-
-  EXPECT_CALL(*gimpController, set_be_verbose(true));
-  EXPECT_CALL(*gimpController, set_no_interface(true));
-  EXPECT_CALL(*gimpController, create_option_context());
-  EXPECT_CALL(*appctx, adopt_option_context(NotNull()));
+  char** const args = appctx->get_argv();
 
   EXPECT_TRUE(parser->parse_args(appctx));
-}
 
-TEST_F(UTEST_CommandLineParser, unknown_option_error)
-{
-  set_args("binaryName --unknown");
-
-  EXPECT_CALL(*gimpController, create_option_context()).WillOnce([]() {
-    return g_option_context_new(nullptr);
-  });
-  EXPECT_CALL(*appctx, adopt_option_context(NotNull())).Times(1);
-  EXPECT_CALL(*gimpController, report_parse_error(Field(
-                                   &GError::message, HasSubstr("--unknown"))))
-      .WillOnce([](GError* error) { g_error_free(error); });
-  EXPECT_CALL(*appctx, push_error(expectedError)).Times(1);
-
-  EXPECT_FALSE(parser->parse_args(appctx));
-
-  EXPECT_THAT(appctx->get_errors(), ElementsAre(expectedError));
-  EXPECT_FALSE(appctx->get_print_version_and_exit());
+  expect_the_flags(true, true, false, false);
+  EXPECT_EQ(appctx->get_argv(), args);
+  EXPECT_EQ(appctx->get_argc(), 4);
+  EXPECT_STREQ(appctx->get_argv()[3], "image.xcf");
 }

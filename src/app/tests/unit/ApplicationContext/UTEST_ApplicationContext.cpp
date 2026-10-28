@@ -1,3 +1,4 @@
+#include <glib.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -8,7 +9,6 @@
 #include "src/app/ApplicationContext.h"
 
 using namespace app;
-using namespace gimp_controller;
 using namespace testing;
 
 class UTEST_ApplicationContext : public Test
@@ -21,13 +21,11 @@ class UTEST_ApplicationContext : public Test
 
   std::shared_ptr<ApplicationContext> create_context(int& gargc, char**& gargv)
   {
-    return std::make_shared<ApplicationContext>(gargc, gargv, gimpController);
+    return std::make_shared<ApplicationContext>(gargc, gargv);
   }
 
   int argc{0};
   char** argv{nullptr};
-  std::shared_ptr<GIMPController> gimpController{
-      std::make_shared<NiceMock<GIMPController>>()};
 
   std::shared_ptr<ApplicationContext> appCtx;
 };
@@ -44,8 +42,9 @@ TEST_F(UTEST_ApplicationContext, empty_context)
   EXPECT_FALSE(appCtx->get_reload());
   EXPECT_FALSE(appCtx->get_first_user_request());
   EXPECT_FALSE(appCtx->get_second_user_request());
-  EXPECT_TRUE(appCtx->get_backtrace_file().empty());
-  EXPECT_EQ(&appCtx->get_gimp_controller(), gimpController.get());
+  EXPECT_FALSE(appCtx->get_be_verbose());
+  EXPECT_FALSE(appCtx->get_no_interface());
+  EXPECT_FALSE(appCtx->get_print_help());
 }
 
 TEST_F(UTEST_ApplicationContext, custom_argc)
@@ -102,17 +101,6 @@ TEST_F(UTEST_ApplicationContext, args_are_referenced_and_not_copied)
   EXPECT_EQ(customCtx->get_argv(), nullptr);
 }
 
-TEST_F(UTEST_ApplicationContext, the_gimp_controller_is_shared)
-{
-  // The context keeps the controller alive, which the option context refers
-  // to until the end of the run.
-  EXPECT_EQ(gimpController.use_count(), 2);
-
-  appCtx.reset();
-
-  EXPECT_EQ(gimpController.use_count(), 1);
-}
-
 TEST_F(UTEST_ApplicationContext, adopting_the_argv_replaces_the_referenced_one)
 {
   gchar** const argvCopy = g_strsplit("binaryName --verbose", " ", -1);
@@ -127,25 +115,6 @@ TEST_F(UTEST_ApplicationContext, adopting_the_argv_replaces_the_referenced_one)
 
   EXPECT_STREQ(argv[0], "otherName");
   EXPECT_EQ(argv[1], nullptr);
-}
-
-TEST_F(UTEST_ApplicationContext, adopting_the_option_context)
-{
-  // The context frees the adopted option contexts, the previous one as soon
-  // as a new one is adopted.
-  appCtx->adopt_option_context(g_option_context_new(nullptr));
-  appCtx->adopt_option_context(g_option_context_new(nullptr));
-
-  EXPECT_TRUE(appCtx->get_errors().empty());
-}
-
-TEST_F(UTEST_ApplicationContext, setting_the_backtrace_file)
-{
-  static const std::string backtraceFile{"backtrace.txt"};
-
-  appCtx->set_backtrace_file(backtraceFile);
-
-  EXPECT_EQ(appCtx->get_backtrace_file(), backtraceFile);
 }
 
 TEST_F(UTEST_ApplicationContext, pushing_an_error)
@@ -190,6 +159,25 @@ TEST_F(UTEST_ApplicationContext, setting_the_print_version_and_exit_flag)
   appCtx->set_print_version_and_exit(false);
 
   EXPECT_FALSE(appCtx->get_print_version_and_exit());
+}
+
+TEST_F(UTEST_ApplicationContext, setting_the_gimp_option_flags)
+{
+  appCtx->set_be_verbose(true);
+  appCtx->set_no_interface(true);
+  appCtx->set_print_help(true);
+
+  EXPECT_TRUE(appCtx->get_be_verbose());
+  EXPECT_TRUE(appCtx->get_no_interface());
+  EXPECT_TRUE(appCtx->get_print_help());
+
+  appCtx->set_be_verbose(false);
+  appCtx->set_no_interface(false);
+  appCtx->set_print_help(false);
+
+  EXPECT_FALSE(appCtx->get_be_verbose());
+  EXPECT_FALSE(appCtx->get_no_interface());
+  EXPECT_FALSE(appCtx->get_print_help());
 }
 
 TEST_F(UTEST_ApplicationContext, setting_the_stop_flag)

@@ -1,4 +1,4 @@
-# The platform implementation the ApplicationFactory creates.
+# The platform implementation the GIMPControllerFactory creates.
 if host_machine.system() == 'windows'
   subdir('windows')
 elif host_machine.system() == 'darwin'
@@ -11,7 +11,8 @@ endif
 # compiles these sources for each GIMP executable, the way it compiled the
 # former main.c: the console one with the GIMP_CONSOLE_COMPILATION macro.
 gimp_controller_sources = files(
-  'GIMPController.cpp'
+  'GIMPController.cpp',
+  'GIMPControllerFactory.cpp'
 ) + gimp_controller_platform_sources
 
 if get_option('ENABLE_UNIT_TESTS') or get_option('ENABLE_COMPONENT_TESTS')

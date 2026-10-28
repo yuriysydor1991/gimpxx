@@ -9,17 +9,13 @@
 #include <string>
 #include <vector>
 
-#include "src/gimp-controller/GIMPController.h"
-
 namespace app
 {
 
 class ApplicationContext
 {
  public:
-  ApplicationContext(
-      int& gargc, char**& gargv,
-      std::shared_ptr<gimp_controller::GIMPController> gimpController);
+  ApplicationContext(int& gargc, char**& gargv);
 
   int& get_argc() const { return margc; }
   char**& get_argv() const { return margv; }
@@ -30,18 +26,14 @@ class ApplicationContext
     margv = argvCopy;
   }
 
-  gimp_controller::GIMPController& get_gimp_controller() const
-  {
-    return *mgimp_controller;
-  }
+  bool get_be_verbose() const { return mbe_verbose; }
+  void set_be_verbose(const bool newValue) { mbe_verbose = newValue; }
 
-  MOCK_METHOD(void, adopt_option_context, (GOptionContext * optionContext));
+  bool get_no_interface() const { return mno_interface; }
+  void set_no_interface(const bool newValue) { mno_interface = newValue; }
 
-  const std::string& get_backtrace_file() const { return mbacktrace_file; }
-  void set_backtrace_file(const std::string& backtraceFile)
-  {
-    mbacktrace_file = backtraceFile;
-  }
+  bool get_print_help() const { return mprint_help; }
+  void set_print_help(const bool newValue) { mprint_help = newValue; }
 
   bool get_print_version_and_exit() const { return mprint_version_and_exit; }
   void set_print_version_and_exit(const bool newValue)
@@ -79,10 +71,9 @@ class ApplicationContext
   char**& margv;
   std::unique_ptr<char*, decltype(&g_strfreev)> madopted_argv{nullptr,
                                                               &g_strfreev};
-  std::shared_ptr<gimp_controller::GIMPController> mgimp_controller;
-  std::unique_ptr<GOptionContext, decltype(&g_option_context_free)>
-      moption_context{nullptr, &g_option_context_free};
-  std::string mbacktrace_file;
+  bool mbe_verbose{false};
+  bool mno_interface{false};
+  bool mprint_help{false};
   bool mprint_version_and_exit{false};
   std::vector<std::string> merrors;
   std::atomic_bool mstop{false};

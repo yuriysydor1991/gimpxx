@@ -11,16 +11,7 @@
 #include "src/app/applications/IApplication.h"
 #include "src/app/signals-handlers/GimpSignalsHandler.h"
 #include "src/app/signals-handlers/ISignalsHandler.h"
-#include "src/gimp-controller/GIMPController.h"
 #include "src/log/log.h"
-
-#if defined(G_OS_WIN32)
-#include "src/gimp-controller/windows/WindowsGIMPController.h"
-#elif defined(__APPLE__)
-#include "src/gimp-controller/macos/MacOSGIMPController.h"
-#else
-#include "src/gimp-controller/linux/LinuxGIMPController.h"
-#endif
 
 namespace app
 {
@@ -28,29 +19,7 @@ namespace app
 std::shared_ptr<ApplicationContext> ApplicationFactory::create_default_context(
     int& gargc, char**& gargv)
 {
-  std::shared_ptr<gimp_controller::GIMPController> gimpController =
-      create_default_gimp_controller();
-
-  assert(gimpController != nullptr);
-
-  if (gimpController == nullptr) {
-    LOGE("Fail to create the GIMP controller instance");
-    return {};
-  }
-
-  return std::make_shared<ApplicationContext>(gargc, gargv, gimpController);
-}
-
-std::shared_ptr<gimp_controller::GIMPController>
-ApplicationFactory::create_default_gimp_controller()
-{
-#if defined(G_OS_WIN32)
-  return std::make_shared<gimp_controller::WindowsGIMPController>();
-#elif defined(__APPLE__)
-  return std::make_shared<gimp_controller::MacOSGIMPController>();
-#else
-  return std::make_shared<gimp_controller::LinuxGIMPController>();
-#endif
+  return std::make_shared<ApplicationContext>(gargc, gargv);
 }
 
 std::shared_ptr<CommandLineParser>
@@ -115,11 +84,6 @@ int ApplicationFactory::run(int& gargc, char**& gargv)
     return IApplication::INVALID;
   }
 
-  gimp_controller::GIMPController& gimpController = ctx->get_gimp_controller();
-
-  // The platform specifics and the signal handlers come before GLib starts.
-  gimpController.init_platform(ctx->get_argc(), ctx->get_argv());
-
   std::shared_ptr<ISignalsHandler> signalsHandler =
       create_default_signals_handler();
 
@@ -133,8 +97,6 @@ int ApplicationFactory::run(int& gargc, char**& gargv)
   if (!signalsHandler->install(ctx)) {
     LOGW("Fail to handle the application OS signals");
   }
-
-  ctx->adopt_argv(gimpController.init_process(ctx->get_argv()));
 
   std::shared_ptr<CommandLineParser> argParser = create_default_arg_parser();
 

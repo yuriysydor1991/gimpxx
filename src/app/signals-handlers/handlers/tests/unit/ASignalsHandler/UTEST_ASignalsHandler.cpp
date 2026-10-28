@@ -7,10 +7,8 @@
 #include <set>
 
 #include "src/app/signals-handlers/handlers/ASignalsHandler.h"
-#include "src/gimp-controller/GIMPController.h"
 
 using namespace app;
-using namespace gimp_controller;
 using namespace testing;
 
 /**
@@ -96,7 +94,7 @@ class UTEST_ASignalsHandler : public Test
 
   std::shared_ptr<ApplicationContext> create_context()
   {
-    return std::make_shared<ApplicationContext>(argc, argv, gimpController);
+    return std::make_shared<ApplicationContext>(argc, argv);
   }
 
   /// @brief Gives the covered signals the OS default disposition, since a
@@ -118,8 +116,6 @@ class UTEST_ASignalsHandler : public Test
 
   int argc{0};
   char** argv{nullptr};
-  std::shared_ptr<GIMPController> gimpController{
-      std::make_shared<GIMPController>()};
 
   std::shared_ptr<TestSignalsHandler> handler;
   std::shared_ptr<ApplicationContext> appCtx;

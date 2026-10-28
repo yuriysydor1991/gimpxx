@@ -1,6 +1,8 @@
 UTEST_ApplicationVersionPrinter_files = files(
   'UTEST_ApplicationVersionPrinter.cpp',
   join_paths(project_include_root, 'src', 'app', 'applications', 'ApplicationVersionPrinter.cpp'),
+  join_paths(project_include_root, 'src', 'app', 'applications', 'Application.cpp'),
+  join_paths(project_include_root, 'src', 'gimp-controller', 'GIMPControllerFactory.cpp'),
   join_paths(app_mocks_root_str, 'ApplicationContext', 'src', 'app', 'ApplicationContext.cpp')
 )
 
@@ -11,6 +13,9 @@ UTEST_ApplicationVersionPrinter = executable(
   include_directories: [
     MOCK_ApplicationContext,
     MOCK_GIMPController,
+    MOCK_LinuxGIMPController,
+    MOCK_MacOSGIMPController,
+    MOCK_WindowsGIMPController,
     MOCK_log,
     configuration_inc
   ],

@@ -7,7 +7,6 @@
 #include "src/app/CommandLineParser.h"
 #include "src/app/applications/IApplication.h"
 #include "src/app/signals-handlers/ISignalsHandler.h"
-#include "src/gimp-controller/GIMPController.h"
 
 namespace app
 {
@@ -16,9 +15,9 @@ namespace app
  * @brief An ApplicationFactory contains main routines to create, configure and
  * start the application in accordance of the given parameters.
  *
- * It starts GIMP in the order the main() of GIMP did, through the
- * GIMPController of the current platform: the platform, the signal handlers
- * and the process first, the command line next, the application at last.
+ * It prepares the start-up of GIMP: the signals handler and the scan of the
+ * command line into the context first, then it creates the application, which
+ * starts GIMP through the GIMPController it creates.
  */
 class ApplicationFactory
 {
@@ -28,27 +27,15 @@ class ApplicationFactory
 
   /**
    * @brief Creates the default context to pass to the application creation
-   * routine and/or to the created IApplication's instance run method. It
-   * holds the ApplicationFactory::create_default_gimp_controller one.
+   * routine and/or to the created IApplication's instance run method.
    *
    * @param gargc Count of a given command line parameters.
    * @param gargv An array of a given command line parameters.
    *
-   * @return Returns the created application context, nullptr if no GIMP
-   * controller is created.
+   * @return Returns the created application context.
    */
   virtual std::shared_ptr<ApplicationContext> create_default_context(
       int& gargc, char**& gargv);
-
-  /**
-   * @brief Creates the GIMPController of the current platform, the only
-   * platform choice of the application, as the Meson builds the descendant of
-   * the current platform only.
-   *
-   * @return Returns created GIMP controller instance.
-   */
-  virtual std::shared_ptr<gimp_controller::GIMPController>
-  create_default_gimp_controller();
 
   /**
    * @brief Creates a command line parser instance to parse application context

@@ -9,12 +9,10 @@ namespace app
 {
 
 /**
- * @brief The command line parser which fills the GIMP options of the
- * GIMPController the ApplicationContext holds.
- *
- * It scans the arguments for the few options GIMP needs before its option
- * parsing first, then parses them with the GIMP option context, the same way
- * the main() of GIMP did.
+ * @brief The command line parser which scans the arguments for the few options
+ * GIMP needs before its option parsing, the same way the main() of GIMP did,
+ * and keeps them in the ApplicationContext. The Application parses all of the
+ * options with the GIMP option context later.
  */
 class CommandLineParser
 {
@@ -23,35 +21,15 @@ class CommandLineParser
   CommandLineParser() = default;
 
   /**
-   * @brief Parses the command line of the given context. The GIMP option
-   * parsing is skipped once the version is to be printed.
-   *
-   * @param ctx The application context with the arguments to parse.
-   *
-   * @return Returns false if the GIMP option parsing fails. The failure is
-   * printed and pushed into the context errors then.
-   */
-  virtual bool parse_args(std::shared_ptr<ApplicationContext> ctx);
-
- protected:
-  /**
-   * @brief Scans the arguments for the verbose and the no interface options,
-   * which must be known before GTK starts, and for the version ones. The help
-   * ones attach the console window on Windows.
+   * @brief Scans the arguments of the given context for the verbose and the no
+   * interface options, which must be known before GTK starts, for the version
+   * ones, which end the scan, and for the help ones.
    *
    * @param ctx The application context with the arguments to scan.
-   */
-  virtual void prescan_args(std::shared_ptr<ApplicationContext> ctx);
-
-  /**
-   * @brief Parses the arguments with the GIMP option context, which the
-   * application context keeps until the end of the run.
    *
-   * @param ctx The application context with the arguments to parse.
-   *
-   * @return Returns false if the parsing fails.
+   * @return Returns false if no valid context is given.
    */
-  virtual bool parse_options(std::shared_ptr<ApplicationContext> ctx);
+  virtual bool parse_args(std::shared_ptr<ApplicationContext> ctx);
 };
 
 }  // namespace app

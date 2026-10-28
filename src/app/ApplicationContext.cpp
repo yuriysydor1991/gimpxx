@@ -1,30 +1,22 @@
 #include "src/app/ApplicationContext.h"
 
-#include <cassert>
-#include <memory>
+#include <glib.h>
+
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace app
 {
 
-ApplicationContext::ApplicationContext(
-    int& gargc, char**& gargv,
-    std::shared_ptr<gimp_controller::GIMPController> gimpController)
-    : margc{gargc}, margv{gargv}, mgimp_controller{std::move(gimpController)}
+ApplicationContext::ApplicationContext(int& gargc, char**& gargv)
+    : margc{gargc}, margv{gargv}
 {
-  assert(mgimp_controller != nullptr);
 }
 
 ApplicationContext::~ApplicationContext()
 {
   if (margv_adopted) {
     g_strfreev(margv);
-  }
-
-  if (moption_context != nullptr) {
-    g_option_context_free(moption_context);
   }
 }
 
@@ -42,28 +34,25 @@ void ApplicationContext::adopt_argv(char** argvCopy)
   margv_adopted = true;
 }
 
-gimp_controller::GIMPController& ApplicationContext::get_gimp_controller() const
+bool ApplicationContext::get_be_verbose() const { return mbe_verbose; }
+
+void ApplicationContext::set_be_verbose(const bool newValue)
 {
-  return *mgimp_controller;
+  mbe_verbose = newValue;
 }
 
-void ApplicationContext::adopt_option_context(GOptionContext* optionContext)
-{
-  if (moption_context != nullptr) {
-    g_option_context_free(moption_context);
-  }
+bool ApplicationContext::get_no_interface() const { return mno_interface; }
 
-  moption_context = optionContext;
+void ApplicationContext::set_no_interface(const bool newValue)
+{
+  mno_interface = newValue;
 }
 
-const std::string& ApplicationContext::get_backtrace_file() const
-{
-  return mbacktrace_file;
-}
+bool ApplicationContext::get_print_help() const { return mprint_help; }
 
-void ApplicationContext::set_backtrace_file(const std::string& backtraceFile)
+void ApplicationContext::set_print_help(const bool newValue)
 {
-  mbacktrace_file = backtraceFile;
+  mprint_help = newValue;
 }
 
 bool ApplicationContext::get_print_version_and_exit() const

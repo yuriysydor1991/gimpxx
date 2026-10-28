@@ -10,7 +10,6 @@ UTEST_ASignalsHandler = executable(
   dependencies: [gtest_deps, dependency('glib-2.0')],
   include_directories: [
     MOCK_ApplicationContext,
-    MOCK_GIMPController,
     MOCK_log,
     configuration_inc
   ],

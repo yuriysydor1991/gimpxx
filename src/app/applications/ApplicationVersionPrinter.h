@@ -2,32 +2,34 @@
 #define GIMPXX_PROJECT_APPLICATIONVERSIONPRINTER_CLASS_H
 
 #include <memory>
+#include <string>
 
 #include "src/app/ApplicationContext.h"
-#include "src/app/applications/IApplication.h"
+#include "src/app/applications/Application.h"
 
 namespace app
 {
 
 /**
- * @brief A version message printer application class. It prints the GIMP
- * version, the verbose one once the verbose output is asked for.
+ * @brief A version message printer application class. It starts GIMP the way
+ * the Application does, then prints the GIMP version instead of running GIMP,
+ * the verbose one once the verbose output is asked for.
  */
-class ApplicationVersionPrinter : public IApplication
+class ApplicationVersionPrinter : public Application
 {
  public:
   ~ApplicationVersionPrinter() override = default;
   ApplicationVersionPrinter() = default;
 
+ protected:
   /**
-   * @brief Implemented default application. See IApplication interface.
+   * @brief Shows the GIMP version with the started controller.
    *
-   * @param ctx Application's run context with command line parameters etc.
-   *
-   * @return Returns the application return status. A zero value on the success
-   * and other value otherwise.
+   * @return Returns the zero value.
    */
-  virtual int run(std::shared_ptr<ApplicationContext> ctx) override;
+  int perform(gimp_controller::GIMPController& gimpController,
+              std::shared_ptr<ApplicationContext> ctx,
+              const std::string& backtraceFile) override;
 };
 
 }  // namespace app

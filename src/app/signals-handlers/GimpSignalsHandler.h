@@ -10,10 +10,10 @@ namespace app
 {
 
 /**
- * @brief The signals handler of GIMP: it installs the GIMP signal handlers,
- * which write the backtraces of the fatal signals and quit GIMP on the
- * terminating ones. The SignalsHandler component takes their semantics over
- * later.
+ * @brief The signals handler of GIMP: it installs none, since the Application
+ * installs the GIMP signal handlers, which write the backtraces of the fatal
+ * signals and quit GIMP on the terminating ones, through the GIMPController it
+ * starts. The SignalsHandler component takes their semantics over later.
  */
 class GimpSignalsHandler : public ISignalsHandler
 {
@@ -22,9 +22,8 @@ class GimpSignalsHandler : public ISignalsHandler
   GimpSignalsHandler() = default;
 
   /**
-   * @brief Initializes the GIMP backtraces and installs the GIMP signal
-   * handlers through the GIMPController of the context, which keeps the
-   * backtrace file they chose.
+   * @brief Leaves the signals to the GIMP signal handlers the Application
+   * installs.
    *
    * @param ctx The application context.
    *

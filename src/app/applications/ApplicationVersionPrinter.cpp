@@ -1,25 +1,19 @@
 #include "src/app/applications/ApplicationVersionPrinter.h"
 
-#include <cassert>
 #include <cstdlib>
 #include <memory>
+#include <string>
 
 #include "src/gimp-controller/GIMPController.h"
-#include "src/log/log.h"
 
 namespace app
 {
 
-int ApplicationVersionPrinter::run(std::shared_ptr<ApplicationContext> ctx)
+int ApplicationVersionPrinter::perform(
+    gimp_controller::GIMPController& gimpController,
+    std::shared_ptr<ApplicationContext>, const std::string&)
 {
-  assert(ctx != nullptr);
-
-  if (ctx == nullptr) {
-    LOGE("No valid application context pointer provided");
-    return INVALID;
-  }
-
-  ctx->get_gimp_controller().show_version();
+  gimpController.show_version();
 
   return EXIT_SUCCESS;
 }
